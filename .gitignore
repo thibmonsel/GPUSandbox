@@ -4,3 +4,5 @@
 *.ptx
 *.cubin
 *.fatbin
+
+chapter_1/hello
