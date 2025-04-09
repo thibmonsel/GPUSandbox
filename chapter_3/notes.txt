@@ -1,0 +1,700 @@
+INTRODUCING THE CUDA EXECUTION MODEL
+
+In general, an execution model provides an operational view of how instructions are executed
+on a specific computing architecture. The CUDA execution model exposes an abstract view of 
+the GPU parallel architecture, allowing you to reason about thread concurrency. 
+In Chapter 2, you learned that the CUDA programming model exposes two primary abstractions: a memory hierar-
+chy and a thread hierarchy that allow you to control the massively parallel GPU. Accordingly, the
+CUDA execution model provides insights that are useful for writing efficient code in terms of both
+instruction throughput and memory accesses
+
+GPU ARCHITECTURE OVERVIEW
+
+The GPU architecture is built around a scalable array of Streaming Multiprocessors (SM). GPU
+hardware parallelism is achieved through the replication of this architectural building block.
+The elemental blocks are : 
+
+➤ CUDA Cores
+➤ Shared Memory/L1 Cache
+➤ Register File
+➤ Load/Store Units
+➤ Special Function Units
+➤ Warp Scheduler
+
+Each SM in a GPU is designed to support concurrent execution of hundreds of threads, and there
+are generally multiple SMs per GPU, so it is possible to have thousands of threads executing concur-
+rently on a single GPU. When a kernel grid is launched, the thread blocks of that kernel grid are
+distributed among available SMs for execution. Once scheduled on an SM, the threads of a thread
+block execute concurrently only on that assigned SM. Multiple thread blocks may be assigned to the
+same SM at once and are scheduled based on the availability of SM resources. Instructions within
+a single thread are pipelined to leverage instruction-level parallelism, in addition to the thread-level
+parallelism you are already familiar with in CUDA.
+
+CUDA employs a Single Instruction Multiple Thread (SIMT) architecture to manage and execute
+threads in groups of 32 called warps. All threads in a warp execute the same instruction at the same
+time. Each thread has its own instruction address counter and register state, and carries out the cur-
+rent instruction on its own data. Each SM partitions the thread blocks assigned to it into 32-thread
+warps that it then schedules for execution on available hardware resources.
+
+The SIMT architecture is similar to the SIMD (Single Instruction, Multiple Data) architecture. Both
+SIMD and SIMT implement parallelism by broadcasting the same instruction to multiple execution
+units. A key difference is that SIMD requires that all vector elements in a vector execute together in
+a unified synchronous group, whereas SIMT allows multiple threads in the same warp to execute
+independently. Even though all threads in a warp start together at the same program address, it is
+possible for individual threads to have different behavior. SIMT enables you to write thread-level
+parallel code for independent, scalar threads, as well as data-parallel code for coordinated threads.
+
+The SIMT model includes three key features that SIMD does not:
+➤ Each thread has its own instruction address counter.
+➤ Each thread has its own register state.
+➤ Each thread can have an independent execution path
+
+
+A MAGIC NUMBER: 32
+The number 32 is a magic number in CUDA programming. It comes from hard-
+ware, and has a significant impact on the performance of software.
+Conceptually, you can think of it as the granularity of work processed simultane-
+ously in SIMD fashion by an SM. Optimizing your workloads to fit within the
+boundaries of a warp (group of 32 threads) will generally lead to more efficient
+utilization of GPU compute resources. You will learn much more about this issue in
+subsequent chapters.
+
+A thread block is scheduled on only one SM. Once a thread block is scheduled on an SM, it remains
+there until execution completes. An SM can hold more than one thread block at the same time.
+
+Shared memory and registers are precious resources in an SM. Shared memory is partitioned
+among thread blocks resident on the SM and registers are partitioned among threads. Threads
+in a thread block can cooperate and communicate with each other through these resources.
+While all threads in a thread block run logically in parallel, not all threads can execute
+physically at the same time. As a result, different threads in a thread block may make progress
+at a different pace.
+
+Sharing data among parallel threads may cause a race condition: Multiple threads accessing the
+same data with an undefi ned ordering, which results in unpredictable program behavior. CUDA
+provides a means to synchronize threads within a thread block to ensure that all threads reach cer-
+tain points in execution before making further progress. However, no primitives are provided for
+inter-block synchronization.
+
+SM: THE HEART OF THE GPU ARCHITECTURE
+
+The Streaming Multiprocessor (SM) is the heart of the GPU architecture. Registers
+and shared memory are scarce resources in the SM. CUDA partitions these
+resources among all threads resident on an SM. Therefore, these limited resources
+impose a strict restriction on the number of active warps in an SM, which corre-
+sponds to the amount of parallelism possible in an SM. Knowing some basic facts
+about the hardware components of an SM will help you organize threads and con-
+figure kernel execution to get the best performance.
+
+Each SM features two warp schedulers and two instruction dispatch units. When a thread block is
+assigned to an SM, all threads in a thread block are divided into warps. The two warp schedulers select
+two warps and issue one instruction from each warp to a group of 16 CUDA cores, 16 load/store units,
+or 4 special function units (illustrated in Figure 3-4). The Fermi architecture, compute capability 2.x, can
+simultaneously handle 48 warps per SM for a total of 1,536 threads resident in a single SM at a time.
+
+
+Dynamic Parallelism is a new feature introduced with Kepler GPUs that allows the GPU to dynami-
+cally launch new grids. With this feature, any kernel can launch another kernel and manage any
+inter-kernel dependencies needed to correctly perform additional work. This feature makes it easier
+for you to create and optimize recursive and data-dependent execution patterns. As illustrated in
+Figure 3-8, without dynamic parallelism the host launches every kernel on the GPU; with dynamic
+parallelism, the GPU can launch nested kernels, eliminating the need to communicate with the CPU.
+Dynamic parallelism broadens GPU applicability in various disciplines. You can launch small
+and medium-sized parallel workloads dynamically in cases where it was previously too expensive
+to do so.
+
+Profi ling tools provide deep insight into kernel performance and help you identify bottlenecks in
+kernels. CUDA provides two primary profiling tools: nvvp, a standalone visual profi ler; and nvprof,
+a command-line profiler.
+
+nvvp is a Visual Profiler, which helps you to visualize and optimize the performance of your CUDA
+program. This tool displays a timeline of program activity on both the CPU and GPU, helping you
+to identify opportunities for performance improvement. In addition, nvvp analyzes your applica-
+tion for potential performance bottlenecks and suggests actions to take to eliminate or reduce those
+bottlenecks.
+
+nvprof collects and displays profiling data on the command line. nvprof was introduced with
+CUDA 5 and evolved from an older command-line CUDA profiling tool. Like nvvp, it enables the
+collection of a timeline of CUDA-related activities on both the CPU and GPU, including kernel exe-
+cution, memory transfers, and CUDA API calls. It also enables you to collect hardware counters and
+performance metrics for CUDA kernels.
+
+
+EVENTS AND METRICS
+
+In CUDA profiling, an event is a countable activity that corresponds to a hardware
+counter collected during kernel execution. A metric is a characteristic of a kernel
+calculated from one or more events. Keep in mind the following concepts about
+events and metrics:
+➤ Most counters are reported per streaming multiprocessor but not the entire
+GPU.
+➤ A single run can only collect a few counters. The collection of some counters is
+mutually exclusive. Multiple profiling runs are often needed to gather all
+relevant counters.
+➤ Counter values may not be exactly the same across repeated runs due to
+variations in GPU execution (such as thread block and warp scheduling order)
+
+
+There are three common limiters to performance for a kernel that you may encounter:
+➤ Memory bandwidth
+➤ Compute resources
+➤ Instruction and memory latency
+
+
+KNOWING HARDWARE RESOURCE DETAILS
+As a C programmer, when writing code just for correctness you can safely ignore
+the cache line size; however, when tuning code for peak performance, you must
+consider cache characteristics in your code structure.
+This is true for CUDA C programming as well. As a CUDA C programmer, you
+must have some understanding of hardware resources if you are to improve kernel
+performance.
+If you do not understand the hardware architecture, the CUDA compiler will still
+do a good job of optimizing your kernel, but it can only do so much. Even basic
+knowledge of the GPU architecture will enable you to write much better code and
+fully exploit the capability of your device.
+In the subsequent sections of this chapter, you will see how hardware concepts
+are connected to performance metrics, and how metrics can be used to guide
+optimization.
+
+UNDERSTANDING THE NATURE OF WARP EXECUTION
+
+When launching a kernel, what do you see from the software point of view? To you, it seems that all
+threads in the kernel run in parallel. From a logical point-of-view this is true, but from the hardware
+point of view not all threads can physically execute in parallel at the same time. This chapter has
+already covered the concept of grouping 32 threads into a single execution unit: a warp. Now you
+will take a closer look at warp execution from the hardware perspective, and gain insights that will
+help guide kernel design.
+
+Warps and Thread Blocks
+
+Warps are the basic unit of execution in an SM. When you launch a grid of thread blocks, the thread
+blocks in the grid are distributed among SMs. Once a thread block is scheduled to an SM, threads in
+the thread block are further partitioned into warps. A warp consists of 32 consecutive threads and all
+threads in a warp are executed in Single Instruction Multiple Thread (SIMT) fashion; that is, all threads
+execute the same instruction, and each thread carries out that operation on its own private data
+
+Thread blocks can be configured to be one-, two-, or three-dimensional. However, from the hard-
+ware perspective, all threads are arranged one-dimensionally. Each thread has a unique ID in a
+block. For a one-dimensional thread block, the unique thread ID is stored in the CUDA built-in
+variable threadIdx.x, and threads with consecutive values for threadIdx.x are grouped into
+warps. For example, a one-dimensional thread block with 128 threads will be organized into 4
+warps as follows:
+Warp 0: thread 0, thread 1, thread 2, ... thread 31
+Warp 1: thread 32, thread 33, thread 34, ... thread 63
+Warp 3: thread 64, thread 65, thread 66, ... thread 95
+Warp 4: thread 96, thread 97, thread 98, ... thread 127
+
+The logical layout of a two or three-dimensional thread block can be converted into its one-dimen-
+sional physical layout by using the x dimension as the innermost dimension, the y dimension as the
+second dimension, and the z dimension as the outermost. For example, given a 2D thread block,
+a unique identifier for each thread in a block can be calculated using the built-in threadIdx and
+blockDim variables:
+
+threadIdx.y * blockDim.x + threadIdx.x.
+
+The same calculation for a 3D thread block is as follows:
+
+threadIdx.z * blockDim.y * blockDim.x + threadIdx.y * blockDim.x + threadIdx.x
+
+The number of warps for a thread block can be determined as follows:
+
+WarpsPerBlock =  int(ThreadsPerBlock/warpSize)
+
+Thus, the hardware always allocates a discrete number of warps for a thread block. A warp is never
+split between different thread blocks. If thread block size is not an even multiple of warp size, some
+threads in the last warp are left inactive. Figure 3-11 illustrates a two-dimensional thread block with
+40 threads in the x dimension and 2 threads in the y dimension. From the application perspective,
+there are 80 threads laid out in a two-dimensional grid.
+
+The hardware will allocate 3 warps for this thread block, resulting in a total of 96 hardware threads
+to support 80 software threads. Note that the last half-warp is inactive. Even though these threads
+are unused they still consume SM resources, such as registers.
+
+THREAD BLOCK: LOGICAL VIEW VERSUS HARDWARE VIEW
+
+From the logical perspective, a thread block is a collection of threads organized in a
+1D, 2D, or 3D layout.
+
+From the hardware perspective, a thread block is a 1D collection of warps. Threads
+in a thread block are organized in a 1D layout, and each set of 32 consecutive
+threads forms a warp
+
+Warp Divergence
+
+GPUs are comparatively simple devices without complex branch prediction mechanisms. Because all
+threads in a warp must execute identical instructions on the same cycle, if one thread executes an
+instruction, all threads in the warp must execute that instruction. This could become a problem if
+threads in the same warp take different paths through an application. For example, consider the fol-
+lowing statement:
+if (cond) {
+...
+} else {
+...
+}
+Suppose for 16 threads in a warp executing this code, cond is true, but for the other 16 cond is
+false. Then half of the warp will need to execute the instructions in the if block, and the other
+half will need to execute the instructions in the else block. Threads in the same warp executing
+different instructions is referred to as warp divergence. Warp divergence would seem to cause a
+paradox, as you already know that all threads in a warp must execute the same instruction on each
+cycle.
+
+If threads of a warp diverge, the warp serially executes each branch path, disabling threads that do
+not take that path. Warp divergence can cause significantly degraded performance. In the preced-
+ing example, the amount of parallelism in the warp was cut by half: only 16 threads were actively
+executing at a time while the other 16 were disabled. With more conditional branches, the loss of
+parallelism would be even greater.
+
+Take note that branch divergence occurs only within a warp. Different conditional values in differ-
+ent warps do not cause warp divergence.
+
+To obtain the best performance, you should avoid different execution paths within the same warp.
+Keep in mind that the warp assignment of threads in a thread block is deterministic. Therefore, it
+may be possible (though not trivial, depending on the algorithm) to partition data in such a way as
+to ensure all threads in the same warp take the same control path in an application.
+
+
+KEY REMINDERS
+
+➤ Warp divergence occurs when threads within a warp take different code paths.
+➤ Different if-then-else branches are executed serially.
+➤ Try to adjust branch granularity to be a multiple of warp size to avoid warp
+divergence.
+➤ Different warps can execute different code with no penalty on performance.
+
+Resource Partitioning
+
+The local execution context of a warp mainly consists of the following resources:
+➤ Program counters
+➤ Registers
+➤ Shared memory
+The execution context of each warp processed by an SM is maintained on-chip during the entire
+lifetime of the warp. Therefore, switching from one execution context to another has no cost.
+
+Each SM has a set of 32-bit registers stored in a register fi le that are partitioned among threads, and
+a fi xed amount of shared memory that is partitioned among thread blocks. The number of thread
+blocks and warps that can simultaneously reside on an SM for a given kernel depends on the number
+of registers and amount of shared memory available on the SM and required by the kernel
+
+Resource availability generally limits the number of resident thread blocks per SM. The number of
+registers and the amount of shared memory per SM vary for devices of different compute capabil-
+ity. If there are insufficient registers or shared memory on each SM to process at least one block, the
+kernel launch will fail. 
+
+
+A thread block is called an active block when compute resources, such as registers and shared mem-
+ory, have been allocated to it. The warps it contains are called active warps. Active warps can be
+further classified into the following three types:
+
+➤ Selected warp
+➤ Stalled warp
+➤ Eligible warp
+
+The warp schedulers on an SM select active warps on every cycle and dispatch them to execution
+units. A warp that is actively executing is called a selected warp. If an active warp is ready for exe-
+cution but not currently executing, it is an eligible warp. If a warp is not ready for execution, it is a
+stalled warp. A warp is eligible for execution if both of the following two conditions is met:
+➤ Thirty-two CUDA cores are available for execution.
+➤ All arguments to the current instruction are ready.
+
+Compute resource partitioning requires special attention in CUDA programming: The compute
+resources limit the number of active warps. Therefore, you must be aware of the restrictions
+imposed by the hardware, and the resources used by your kernel. In order to maximize GPU utiliza-
+tion, you need to maximize the number of active warps.
+
+Latency Hiding
+
+An SM relies on thread-level parallelism to maximize utilization of its functional units. Utilization
+is therefore directly linked to the number of resident warps. The number of clock cycles between
+an instruction being issued and being completed is defi ned as instruction latency. Full compute
+resource utilization is achieved when all warp schedulers have an eligible warp at every clock cycle.
+This ensures that the latency of each instruction can be hidden by issuing other instructions in other
+resident warps.
+
+When considering instruction latency, instructions can be classified into two basic types:
+
+➤ Arithmetic instructions
+➤ Memory instructions
+
+Arithmetic instruction latency is the time between an arithmetic operation starting and its output
+being produced. Memory instruction latency is the time between a load or store operation being issued
+and the data arriving at its destination. The corresponding latencies for each case are approximately:
+
+➤ 10-20 cycles for arithmetic operations
+➤ 400-800 cycles for global memory accesses
+
+You may wonder how to estimate the number of active warps required to hide latency. Little’s
+Law can provide a reasonable approximation. Originally a theorem in queue theory, it can also be
+applied to GPUs:
+
+Number of Required Warps = Latency × Throughput
+
+THROUGHPUT AND BANDWIDTH
+Bandwidth and throughput are often confused, but may be used interchangeably
+depending on the situation. Both throughput and bandwidth are rate metrics used
+to measure performance.
+Bandwidth is usually used to refer to a theoretical peak value, while throughput is
+used to refer to an achieved value.
+Bandwidth is usually used to describe the highest possible amount of data transfer
+per time unit, while throughput can be used to describe the rate of any kind of
+information or operations carried out per time unit, such as, how many instruc-
+tions are completed per cycle.
+
+Throughput is specified in number of operations per cycle per SM, and one warp executing one
+instruction corresponds to 32 operations. Therefore, the required number of warps per SM to main-
+tain full compute resource utilization can be calculated for Fermi GPUs as 640 ÷ 32 = 20 warps.
+Hence, the required parallelism for arithmetic operations can be expressed as either the number of
+operations or the number of warps. This simple unit conversion demonstrates that there are two
+ways to increase parallelism:
+
+➤ Instruction-level parallelism (ILP): More independent instructions within a thread
+➤ Thread-level parallelism (TLP): More concurrently eligible threads
+
+For memory operations, the required parallelism is expressed as the number of bytes per
+cycle required to hide memory latency
+
+EXPOSING SUFFICIENT PARALLELISM
+Because the GPU partitions compute resources among threads, switching between
+concurrent warps has very little overhead (on the order of one or two cycles) as
+the required state is already available on-chip. If there are sufficient concurrently
+active threads, you can keep the GPU busy in every pipeline stage on every cycle.
+In this situation, the latency of one warp is hidden by the execution of other warps.
+Therefore, exposing sufficient parallelism to SMs is beneficial to performance.
+A simple formula for calculating the required parallelism is to multiply the num-
+ber of cores per SM by the latency of one arithmetic instruction on that SM. For
+example, Fermi has 32 single-precision floating-point pipeline lanes and the latency
+of one arithmetic instruction is 20 cycles, so at minimum 32 x 20 = 640 threads per
+SM are required to keep your device busy. However, this is a lower bound.
+
+Occupancy
+
+Instructions are executed sequentially within each CUDA core. When one warp stalls, the SM
+switches to executing other eligible warps. Ideally, you want to have enough warps to keep the cores of
+the device occupied. Occupancy is the ratio of active warps to maximum number of warps, per SM.
+occupancy active warps
+maximum warps
+
+You can check the maximum warps per SM for your device using the following function:
+cudaError_t cudaGetDeviceProperties(struct cudaDeviceProp *prop, int device);
+Various statistics from your device are returned in the cudaDeviceProp struct. The maximum
+number of threads per SM is returned in the following variable:
+
+maxThreadsPerMultiProcessor
+
+You can derive the maximum warps by dividing maxThreadsPerMultiProcessor by 32. Listing 3-2
+shows you how to use cudaGetDeviceProperties to obtain GPU configuration information.
+
+To enhance your occupancy, you may also need to resize the thread block configuration or re-adjust
+resource usage to permit more simultaneously active warps and improve utilization of compute
+resources. Manipulating thread blocks to either extreme can restrict resource utilization:
+
+➤ Small thread blocks: Too few threads per block leads to hardware limits on the number of
+warps per SM to be reached before all resources are fully utilized.
+
+➤ Large thread blocks: Too many threads per block leads to fewer per-SM hardware resources
+available to each thread
+
+
+GUIDELINES FOR GRID AND BLOCK SIZE
+
+Using these guidelines will help your application scale on current and future
+devices:
+➤ Keep the number of threads per block a multiple of warp size (32).
+➤ Avoid small block sizes: Start with at least 128 or 256 threads per block.
+➤ Adjust block size up or down according to kernel resource requirements.
+➤ Keep the number of blocks much greater than the number of SMs to expose
+sufficient parallelism to your device.
+➤ Conduct experiments to discover the best execution configuration and
+resource usage
+
+
+Synchronization
+
+Barrier synchronization is a primitive that is common in many parallel programming languages. In
+CUDA, synchronization can be performed at two levels:
+➤ System-level: Wait for all work on both the host and the device to complete.
+➤ Block-level: Wait for all threads in a thread block to reach the same point in execution
+on the device.
+
+Since many CUDA API calls and all kernel launches are asynchronous with respect to the host,
+cudaDeviceSynchronize can be used to block the host application until all CUDA operations (cop-
+ies, kernels, and so on) have completed:
+
+cudaError_t cudaDeviceSynchronize(void);
+
+This function may return errors from previous asynchronous CUDA operations.
+
+Because warps in a thread block are executed in an undefi ned order, CUDA provides the ability to
+synchronize their execution with a block-local barrier. You can mark synchronization points in the
+kernel using:
+__device__ void __syncthreads(void);
+When __syncthreads is called, each thread in the same thread block must wait until all other
+threads in that thread block have reached this synchronization point. All global and shared memory
+accesses made by all threads prior to this barrier will be visible to all other threads in the thread
+block after the barrier. The function is used to coordinate communication between threads in the
+same block, but it can negatively affect performance by forcing warps to become idle.
+
+Threads within a thread block can share data through shared memory and registers. When sharing
+data between threads you need to be careful to avoid race conditions. Race conditions, or hazards,
+are unordered accesses by multiple threads to the same memory location. For example, a read-after-
+write hazard occurs when an unordered read of a location occurs following a write. Because there is
+no ordering between the read and the write, it is undefi ned if the read should have loaded the value
+of that location before the write or after the write. Other examples of hazards are write-after-read
+or write-after-write. While threads in a thread block run logically in parallel, not all threads can
+execute physically at the same time. If thread A tries to read data that is written by thread B in a
+different warp, you can only be sure that thread B has fi nished writing if proper synchronization is
+used. Otherwise, a race condition occurs.
+
+There is no thread synchronization among different blocks. The only safe way to synchronize
+across blocks is to use the global synchronization point at the end of every kernel execution; that
+is, terminate the current kernel and start a new kernel for the work to be performed after global
+synchronization.
+
+By not allowing threads in different blocks to synchronize with each other, GPUs can execute blocks
+in any order. This enables CUDA programs to be scalable across massively parallel GPUs.
+
+Scalability
+
+The ability to execute the same application code on a varying number of compute cores is referred
+to as transparent scalability. A transparently scalable platform broadens the use-cases for existing
+applications, and reduces the burden on developers because they can avoid making changes for new
+or different hardware. Scalability can be more important than efficiency. A scalable but inefficient
+system can handle larger workloads by simply adding hardware cores. An efficient but un-scalable
+system may quickly reach an upper limit on achievable performance.
+
+Note that the common feature for the last two cases is that their block size in the innermost dimen-
+sion is half of a warp. As stated earlier, for grid and block heuristics the innermost dimension should
+always be a multiple of the warp size
+
+
+Exposing More Parallelism
+
+One conclusion you can draw from the previous section is that the innermost dimension of a block
+(block.x) should be a multiple of warp size. Doing so drastically improved load efficiency. You
+might still be curious:
+
+➤ Is it possible to increase the load throughput further by adjusting block.x?
+➤ Is it possible to expose more parallelism?
+
+
+You might guess that examples with the least thread blocks should report lower achieved occupancy,
+and examples with the most thread blocks should report higher achieved occupancy. This theory
+can be examined by measuring the achieved_occupancy metric with nvprof:
+
+METRICS AND PERFORMANCE
+
+➤ In most cases, no single metric can prescribe optimal performance.
+➤ Which metric or event most directly relates to overall performance depends on
+the nature of the kernel code.
+➤ Seek a good balance among related metrics and events.
+➤ Check the kernel from different angles to find a balance among the related
+metrics.
+➤ Grid/block heuristics provide a good starting point for performance tuning
+
+
+AVOIDING BRANCH DIVERGENCE
+
+
+$$$$$$$$$$$$$$$$$$$$
+
+Branch divergence and warp divergence in GPUs are closely related but not exactly the same concepts.
+Branch divergence refers to the general condition where threads within a group take different execution paths 
+due to conditional statements (like if/else branches). This is a fundamental concept that can happen on any parallel architecture.
+Warp divergence is the NVIDIA-specific manifestation of branch divergence. A warp is NVIDIA's term for a group of 32 threads that 
+execute in lockstep (SIMD - Single Instruction, Multiple Data). When threads within a warp take different paths due to conditionals,
+ the warp must execute both paths serially, with some threads inactive during each path. This is called warp divergence and leads to performance degradation.
+AMD GPUs have a similar concept but use different terminology - they call their execution groups "wavefronts" instead of warps, 
+so on AMD hardware you might hear about "wavefront divergence" instead. In both cases, the performance issue stems from the same underlying 
+problem: when threads that are meant to execute together take  different paths, the hardware cannot achieve full utilization.
+
+$$$$$$$$$$$$$$$$$$$$$$$$$$$$$44
+
+
+The Parallel Reduction Problem
+
+Suppose you want to calculate the sum of an array of integers with N elements.
+
+What if there is a huge number of data elements? How can you accelerate this sum by executing
+it in parallel? Due to the associative and commutative properties of addition, the elements of this
+array can be summed in any order. So you can perform parallel addition in the following way:
+
+1. Partition the input vector into smaller chunks.
+2. Have a thread calculate the partial sum for each chunk.
+3. Add the partial results from each chunk into a final sum.
+
+A common way to accomplish parallel addition is using an iterative pairwise implementation: A
+chunk contains only a pair of elements, and a thread sums those two elements to produce one par-
+tial result. These partial results are then stored in-place in the original input vector. These new
+values are used as the input to be summed in the next iteration. Because the number of input val-
+ues halves on every iteration, a fi nal sum has been calculated when the length of the output vector
+reaches one.
+
+Depending on where output elements are stored in-place for each iteration, pairwise parallel sum
+implementations can be further classified into the following two types:
+
+➤ Neighbored pair: Elements are paired with their immediate neighbor.
+➤ Interleaved pair: Paired elements are separated by a given stride.
+Figure 3-19 illustrates the neighbored pair implementation.
+
+In this implementation, a thread takes
+two adjacent elements to produce one partial sum at each step. For an array with N elements, this
+implementation requires N − 1 sums and log 2 N steps.
+
+While the code above implements addition, any commutative and associative operation could
+replace addition. For example, the maximum value in the input vector could be calculated by replac-
+ing the sum with a call to max. Other example valid operations are minimum, average, and product.
+This general problem of performing a commutative and associative operation across a vector is
+known as the reduction problem. Parallel reduction is the parallel execution of this operation.
+Parallel reduction is one of the most common parallel patterns, and a key operation in many parallel
+algorithms
+
+int recursiveReduce(int *data, int const size) {
+// terminate check
+if (size == 1) return data[0];
+// renew the stride
+int const stride = size / 2;
+// in-place reduction
+for (int i = 0; i < stride; i++) {
+data[i] += data[i + stride];
+}
+// call recursively
+return recursiveReduce(data, stride);}
+
+
+
+Divergence in Parallel Reduction
+
+As a starting point, you will experiment with a kernel implementing the neighbored pair approach
+illustrated in Figure 3-21. Each thread adds two adjacent elements to produce a partial sum.
+
+
+In this kernel, there are two global memory arrays: one large array for storing the entire array to
+reduce, and one smaller array for holding the partial sums of each thread block. Each thread block
+operates independently on a portion of the array. One iteration of a loop performs a single reduc-
+tion step. The reduction is done in-place, which means that the values in global memory are replaced
+by partial sums at each step. The __syncthreads statement ensures that all partial sums for every
+thread in the current iteration have been saved to global memory before any threads in the same
+thread block enter the next iteration. All threads that enter the next iteration consume the values
+produced in the previous step. After the fi nal round, the sum for the entire thread block is saved into
+global memory.
+
+
+Improving Divergence in Parallel Reduction
+
+
+Examine the kernel reduceNeighbored and note the following conditional statement:
+if ((tid % (2 * stride)) == 0)
+Because this statement is only true for even numbered threads, it causes highly divergent warps. In
+the fi rst iteration of parallel reduction, only even threads execute the body of this conditional state-
+ment but all threads must be scheduled. On the second iteration, only one fourth of all threads are
+active but still all threads must be scheduled. Warp divergence can be reduced by rearranging the
+array index of each thread to force neighboring threads to perform the addition. Figure 3-23 illus-
+trates this implementation. 
+
+Reducing with Interleaved Pairs
+
+The interleaved pair approach reverses the striding of elements compared to the neighbored
+approach: The stride is started at half of the thread block size and then reduced by half on each
+iteration (illustrated in Figure 3-24). Each thread adds two elements separated by the current stride
+to produce a partial sum at each round
+
+
+UNROLLING LOOPS
+
+Loop unrolling is a technique that attempts to optimize loop execution by reducing the frequency
+of branches and loop maintenance instructions. In loop unrolling, rather than writing the body of a
+loop once and using a loop to execute it repeatedly, the body is written in code multiple times. Any
+enclosing loop then either has its iterations reduced or is removed entirely. The number of copies
+made of the loop body is called the loop unrolling factor. The number of iterations in the enclosing
+loop is divided by the loop unrolling factor. Loop unrolling is most effective at improving perfor-
+mance for sequential array processing loops where the number of iterations is known prior to execu-
+tion of the loop. Consider the code fragment below:
+
+for (int i = 0; i < 100; i++) {
+a[i] = b[i] + c[i];
+}
+
+If you replicate the body of the loop once, the number of iterations can be reduced to half of the
+original loop:
+
+for (int i = 0; i < 100; i += 2) {
+a[i] = b[i] + c[i];
+a[i+1] = b[i+1] + c[i+1];
+}
+
+DYNAMIC PARALLELISM
+
+So far in this book, all kernels have been invoked from the host thread. The GPU workload is com-
+pletely under the control of the CPU. CUDA Dynamic Parallelism allows new GPU kernels to be 
+created and synchronized directly on the GPU. The ability to dynamically add parallelism to a GPU
+application at arbitrary points in a kernel offers exciting new capabilities.
+
+Nested Execution
+
+
+With dynamic parallelism, the kernel execution concepts (grids, blocks, launch configuration, and
+so on) that you are already familiar with can also be applied to kernel invocation directly on the
+GPU. The same kernel invocation syntax is used to launch a new kernel within a kernel.
+
+In dynamic parallelism, kernel executions are classified into two types: parent and child. A parent
+thread, parent thread block, or parent grid has launched a new grid, the child grid. A child thread,
+child thread block, or child grid has been launched by a parent. A child grid must complete before
+the parent thread, parent thread block, or parent grids are considered complete. A parent is not con-
+sidered complete until all of its child grids have completed.
+
+Grid launches in a device thread are visible across a thread block. This means that a thread may
+synchronize on the child grids launched by that thread or by other threads in the same thread block.
+Execution of a thread block is not considered complete until all child grids created by all threads in
+the block have completed. If all threads in a block exit before all child grids have completed, implicit
+synchronization on those child grids is triggered.
+
+When a parent launches a child grid, the child is not guaranteed to begin execution until the parent
+thread block explicitly synchronizes on the child.
+
+Parent and child grids share the same global and constant memory storage, but have distinct local
+and shared memory. Parent and child grids have concurrent access to global memory, with weak
+consistency guarantees between child and parent. There are two points in the execution of a child grid
+when its view of memory is fully consistent with the parent thread: at the start of a child grid, and
+when the child grid completes. All global memory operations in the parent thread prior to a child grid
+invocation are guaranteed to be visible to the child grid. All memory operations of the child grid are
+guaranteed to be visible to the parent after the parent has synchronized on the child grid’s completion.
+
+
+RESTRICTIONS ON DYNAMIC PARALLELISM
+
+Dynamic Parallelism is only supported by devices of compute capability 3.5 and
+higher.
+Kernels invoked through dynamic parallelism cannot be launched on physically
+separate devices. It is permitted, however, to query properties for any CUDA capa-
+ble device in the system.
+The maximum nesting depth of dynamic parallelism is limited to 24, but in reality
+most kernels will be limited by the amount of memory required by the device runtime
+system at each new level, as the device runtime reserves additional memory for syn-
+chronization management between every parent and child grid at each nested level.
+
+
+What are the two primary causes of performance improvement when unrolling loops,
+data blocks, or warps in CUDA? Explain how each type of unrolling improves instruction
+throughput.
+
+When unrolling loops, data blocks, or warps in CUDA, there are two primary causes of performance improvement:
+
+Reduced Control Overhead: Loop unrolling eliminates branch instructions and loop control logic that would otherwise be executed on each iteration.
+Increased Instruction-Level Parallelism (ILP): Unrolling exposes more independent instructions to the GPU scheduler, allowing it to better utilize the execution units.
+
+Let me explain how each type of unrolling improves instruction throughput:
+
+Loop Unrolling: When you unroll a loop, you're replacing the iterative structure with multiple copies of the loop body. 
+This reduces branch prediction misses and eliminates the overhead of increment and comparison operations for loop counters. 
+The GPU can then process multiple iterations simultaneously without waiting for loop control logic, which is especially beneficial
+for small loop bodies where control overhead is proportionally significant.
+
+Data Block Unrolling: By processing multiple data elements in a single thread, data block unrolling increases the arithmetic intensity 
+(ratio of compute operations to memory operations). This helps hide memory latency as the GPU can perform calculations on already-loaded 
+data while waiting for new memory transactions to complete. It also often allows for better register reuse, reducing register pressure relative to launching more threads.
+
+Warp Unrolling: This technique involves having each thread handle work that would normally be done by multiple threads. Since warps 
+execute in SIMT (Single Instruction, Multiple Thread) fashion, unrolling at the warp level can reduce thread divergence by ensuring 
+that threads within a warp follow more similar execution paths. This improves instruction throughput because fewer instruction cycles
+are wasted on inactive threads within partially active warps.
+
+All these unrolling techniques need to be balanced carefully, as excessive unrolling can lead to increased register pressure, reduced occupancy,
+and potentially worse performance.

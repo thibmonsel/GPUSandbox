@@ -1,0 +1,63 @@
+Shared Memory Allocation
+
+There are several ways to allocate or declare shared memory variables depending on your appli-
+cation requirements. You can allocate shared memory variables either statically or dynamically.
+Shared memory can also be declared as either local to a CUDA kernel or globally in a CUDA source
+code fi le. CUDA supports declaration of 1D, 2D, and 3D shared memory arrays.
+A shared memory variable is declared with the following qualifier:
+
+__shared__
+
+
+The following code segment statically declares a shared memory 2D float array. If declared inside
+a kernel function, the scope of this variable is local to the kernel. If declared outside of any kernels
+in a fi le, the scope of this variable is global to all kernels.
+
+__shared__ float tile[size_y][size_x];
+
+If the size of shared memory is unknown at compile time, you can declare an un-sized array with the
+extern keyword. For example, the following code segment declares a shared memory 1D un-sized
+int array. This declaration can be made either inside a kernel or outside of all kernels.
+
+extern __shared__ int tile[];
+
+Because the size of this array is unknown at compile-time, you need to dynamically allocate shared
+memory at each kernel invocation by specifying the desired size in bytes as a third argument inside
+the triple angled brackets, as follows:
+
+kernel<<<grid, block, isize * sizeof(int)>>>(...)
+
+Shared Memory Banks and Access Mode
+
+There are two key properties to measure when optimizing memory performance: latency and band-
+width. Chapter 4 explained the impact on kernel performance of latency and bandwidth caused
+by different global memory access patterns. Shared memory can be used to hide the performance
+impact of global memory latency and bandwidth.
+
+Memory Banks
+
+To achieve high memory bandwidth, shared memory is divided into 32 equally-sized memory mod-
+ules, called banks, which can be accessed simultaneously. There are 32 banks because there are 32
+threads in a warp. Shared memory is a 1D address space. Depending on the compute capability of
+a GPU, the addresses of shared memory are mapped to different banks in different patterns (more
+on this later). If a shared memory load or store operation issued by a warp does not access more
+than one memory location per bank, the operation can be serviced by one memory transaction.
+Otherwise, the operation is serviced by multiple memory transactions, thereby decreasing memory
+bandwidth utilization.
+
+Bank Conflict
+
+When multiple addresses in a shared memory request fall into the same memory bank, a bank
+conflict occurs, causing the request to be replayed. The hardware splits a request with a bank con-
+fl ict into as many separate confl ict-free transactions as necessary, decreasing the effective bandwidth
+by a factor equal to the number of separate memory transactions required.
+Three typical situations occur when a request to shared memory is issued by a warp:
+
+➤ Parallel access: multiple addresses accessed across multiple banks
+➤ Serial access: multiple addresses accessed within the same bank
+➤ Broadcast access: a single address read in a single bank
+
+Parallel access is the most common pattern: multiple addresses accessed by a warp that fall into
+multiple banks. This pattern implies that some, if not all, of the addresses can be serviced in a single
+memory transaction. Optimally, a conflict-free shared memory access is performed when every
+address is in a separate bank.

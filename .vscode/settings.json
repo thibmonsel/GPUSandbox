@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.cu": "cpp",
+        "*.cuh": "cpp",
+        "stdlib.h": "c",
+        "memory_resource": "cpp",
+        "chrono": "cpp"
+    }
+}

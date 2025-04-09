@@ -1,0 +1,11 @@
+Read in the ordering : 
+- sumArraysOnHost.c 
+- checkDimension.cu
+- defineGridBlock.cu
+- sumArraysOnGPU-small-case.cu
+- sumArraysOnGPU-timer.cu
+- checkThreadIndex.cu
+- sumMatrixOnGPU-2D-grid-2D-block.cu
+- sumMatrixOnGPU-1D-grid-1D-block.cu 
+- sumMatrixOnGPU-2D-grid-1D-block.cu
+- managingDevice.cu

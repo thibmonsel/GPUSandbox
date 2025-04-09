@@ -1,0 +1,223 @@
+INTRODUCING THE CUDA MEMORY MODEL
+
+Memory access and management are important parts of any programming language. Memory man-
+agement has a particularly large impact on high performance computing in modern accelerators.
+Because many workloads are limited by how rapidly they can load and store data, having a large
+amount of low-latency, high-bandwidth memory can be very beneficial to performance. However,
+procuring large capacity, high-performance memory is not always possible or economical. Instead,
+you must rely on the memory model to achieve optimal latency and bandwidth, given the hardware
+memory subsystem. The CUDA memory model unifies separate host and device memory systems
+and exposes the full memory hierarchy so that you can explicitly control data placement for optimal
+performance.
+
+Benefits of a Memory Hierarchy
+
+In general, applications do not access arbitrary data or run arbitrary code at any point-in-time.
+Instead, applications often follow the principle of locality, which suggests that they access a rela-
+tively small and localized portion of their address space at any point-in-time. There are two
+different types of locality:
+➤ Temporal locality (locality in time)
+➤ Spatial locality (locality in space)
+
+Temporal locality assumes that if a data location is referenced, then it is more likely to be referenced
+again within a short time period and less likely to be referenced as more and more time passes.
+Spatial locality assumes that if a memory location is referenced, nearby locations are likely to be ref-
+erenced as well.
+
+
+Main memory for both CPUs and GPUs is implemented using DRAM (Dynamic Random Access
+Memory), while lower-latency memory (such as CPU L1 cache) is implemented using SRAM (Static
+Random Access Memory). The largest and slowest level in the memory hierarchy is generally imple-
+mented using a magnetic disk or flash drive. In this memory hierarchy, data is either kept in low-
+latency, low-capacity memory when it is actively being used by the processor, or in high-latency,
+high-capacity memory when it is being stored for later use. This memory hierarchy can provide the
+illusion of large but low-latency memory.
+
+Both GPUs and CPUs use similar principles and models in memory hierarchy design. The key differ-
+ence between GPU and CPU memory models is that the CUDA programming model exposes more
+of the memory hierarchy and gives you more explicit control over its behavior.
+
+CUDA Memory Model
+
+To programmers, there are generally two classifications of memory:
+
+➤ Programmable: You explicitly control what data is placed in programmable memory.
+➤ Non-programmable: You have no control over data placement, and rely on automatic techniques to achieve good performance.
+
+In the CPU memory hierarchy, L1 cache and L2 cache are examples of non-programmable memory.
+On the other hand, the CUDA memory model exposes many types of programmable memory to you:
+
+➤ Registers
+➤ Shared memory
+➤ Local memory
+➤ Constant memory
+➤ Texture memory
+➤ Global memory
+
+
+he hierarchy of these memory spaces. Each has a different scope, lifetime, and
+caching behavior. A thread in a kernel has its own private local memory. A thread block has its own
+shared memory, visible to all threads in the same thread block, and whose contents persist for the
+lifetime of the thread block. All threads can access global memory. There are also two read-only
+memory spaces accessible by all threads: the constant and texture memory spaces. The global, con-
+stant, and texture memory spaces are optimized for different uses. Texture memory offers different
+address modes and fi ltering for various data layouts. The contents of global, constant, and texture
+memory have the same lifetime as an application
+
+
+Registers
+
+Registers are the fastest memory space on a GPU. An automatic variable declared in a kernel with-
+out any other type qualifiers is generally stored in a register. Arrays declared in a kernel may also be
+stored in registers, but only if the indices used to reference the array are constant and can be deter-
+mined at compile time.
+Register variables are private to each thread. A kernel typically uses registers to hold frequently
+accessed thread-private variables. Register variables share their lifetime with the kernel. Once a ker-
+nel completes execution, a register variable cannot be accessed again.
+
+Using fewer registers in your kernels may allow more thread blocks to reside on an SM.
+More concurrent thread blocks per-SM can increase occupancy and improve performance.
+You can check the hardware resources used by a kernel with the nvcc compiler option below. For
+example, this will print the number of registers, bytes of shared memory, and bytes of constant
+memory used by each thread.
+
+-Xptxas -v,-abi=no
+
+If a kernel uses more registers than the hardware limit, the excess registers will spill over to local
+memory. This register spilling can have adverse performance consequences. The nvcc compiler
+uses heuristics to minimize register usage and avoid register spilling. 
+
+What is a Symbol ? 
+
+
+In CUDA, a Symbol refers to a special variable or data structure that can be accessed from both host (CPU) and device 
+(GPU) code. Symbols are created using CUDA's symbol management functionality, primarily through the use of the __device__, __constant__, and __managed__ variable qualifiers.
+The key characteristics of a Symbol in CUDA include:
+
+Global Visibility: A Symbol is accessible across the entire CUDA application, both from host and device code.
+Memory Address Resolution: CUDA provides functions like cudaGetSymbolAddress() to get the device memory address of a Symbol, which is useful for operations like memory copies.
+Automatic Memory Management: When you declare a Symbol using appropriate qualifiers, CUDA handles the memory allocation and, in some cases, synchronization between host and device.
+
+
+ZERO-COPY MEMORY
+
+There are two common categories of heterogeneous computing system architec-
+tures: Integrated and discrete.
+In integrated architectures, CPUs and GPUs are fused onto a single die and physi-
+cally share main memory. In this architecture, zero-copy memory is more likely to
+benefit both performance and programmability because no copies over the PCIe
+bus are necessary.
+For discrete systems with devices connected to the host via PCIe bus, zero-copy
+memory is advantageous only in special cases.
+Because the mapped pinned memory is shared between the host and device, you
+must synchronize memory accesses to avoid any potential data hazards caused by
+multiple threads accessing the same memory location without synchronization.
+Be careful to not overuse zero-copy memory. Device kernels that read from zero-
+copy memory can be very slow due to its high-latency.
+
+
+Unified Virtual Addressing
+
+With UVA, host memory and device memory share a single virtual address space.
+
+
+Unified Memory
+
+With CUDA 6.0, a new feature called Unifi ed Memory was introduced to simplify memory man-
+agement in the CUDA programming model. Unified Memory creates a pool of managed memory,
+where each allocation from this memory pool is accessible on both the CPU and GPU with the same
+memory address (that is, pointer). The underlying system automatically migrates data in the unified
+memory space between the host and device. This data movement is transparent to the application,
+greatly simplifying the application code.
+
+Unified Memory depends on Unified Virtual Addressing (UVA) support, but they are entirely differ-
+ent technologies. UVA provides a single virtual memory address space for all processors in the
+system. However, UVA does not automatically migrate data from one physical location to another;
+that is a capability unique to Unified Memory.
+
+Unified Memory offers a “single-pointer-to-data” model that is conceptually similar to zero-copy
+memory. However, zero-copy memory is allocated in host memory, and as a result kernel
+performance generally suffers from high-latency accesses to zero-copy memory over the PCIe bus.
+Unified Memory, on the other hand, decouples memory and execution spaces so that data can be
+transparently migrated on demand to the host or device to improve locality and performance.
+
+
+MEMORY ACCESS PATTERNS
+
+Most device data access begins in global memory, and most GPU applications tend to be limited by
+memory bandwidth. Therefore, maximizing your application’s use of global memory bandwidth is
+a fundamental step in kernel performance tuning. If you do not tune global memory usage properly,
+other optimizations will likely have a negligible effect.
+
+To achieve the best performance when reading and writing data, memory access operations must
+meet certain conditions. One of the distinguishing features of the CUDA execution model is that
+instructions are issued and executed per warp. Memory operations are also issued per warp. When
+executing a memory instruction, each thread in a warp provides a memory address it is loading
+or storing. Cooperatively, the 32 threads in a warp present a single memory access request com-
+prised of the requested addresses, which is serviced by one or more device memory transactions.
+Depending on the distribution of memory addresses within a warp, memory accesses can be
+classified into different patterns. In this section, you are going to examine different memory access
+patterns and learn how to achieve optimal global memory access
+
+There are two characteristics of device memory accesses that you should strive for when optimizing
+your application:
+
+➤ Aligned memory accesses
+➤ Coalesced memory accesses
+
+Aligned memory accesses occur when the fi rst address of a device memory transaction is an even
+multiple of the cache granularity being used to service the transaction (either 32 bytes for L2 cache
+or 128 bytes for L1 cache). Performing a misaligned load will cause wasted bandwidth.
+Coalesced memory accesses occur when all 32 threads in a warp access a contiguous chunk of
+memory.
+
+Aligned coalesced memory accesses are ideal: A wrap accessing a contiguous chunk of memory
+starting at an aligned memory address
+
+
+The following flags inform the compiler to disable the L1 cache:
+
+-Xptxas -dlcm=cg
+
+With the L1 cache disabled, all load requests to global memory go directly to the L2 cache; when an
+L2 miss occurs, the requests are serviced by DRAM. Each memory transaction may be conducted
+by one, two, or four segments, where one segment is 32 bytes.
+The L1 cache can also be explicitly enabled with the following flag:
+
+-Xptxas -dlcm=ca
+
+With this flag set, global memory load requests fi rst attempt to hit in L1 cache. On an L1 miss, the
+requests go to L2. On an L2 miss, the requests are serviced by DRAM. In this mode, a load memory
+request is serviced by a 128-byte device memory transaction.
+
+The L1 cache is not used to cache global memory loads. The L1 cache is exclusively used to cache register spills to local memory.
+
+
+MEMORY LOAD ACCESS PATTERNS
+
+There are two types of memory loads:
+
+➤ Cached load (L1 cache enabled)
+➤ Uncached load (L1 cache disabled)
+The access pattern for memory loads can be characterized by the following
+combinations:
+➤ Cached versus uncached: The load is cached if L1 cache is enabled
+➤ Aligned versus misaligned: The load is aligned if the fi rst address of a memory
+access is a multiple of 32 bytes
+➤ Coalesced versus uncoalesced: The load is coalesced if a warp accesses a con-
+tiguous chunk of data
+
+DIFFERENCE BETWEEN CPU L1 CACHE AND GPU L1 CACHE
+
+The CPU L1 cache is optimized for both spatial and temporal locality. The GPU L1
+cache is designed for spatial but not temporal locality. Frequent access to a cached
+L1 memory location does not increase the probability that the data will stay in
+cache
+
+AOS VERSUS SOA (Arrays of structures = AOS)
+
+Many parallel programming paradigms, in particular SIMD-style paradigms, pre-
+fer SoA. In CUDA C programming, SoA is also typically preferred because data ele-
+ments are pre-arranged for efficient coalesced access to global memory, since data
+elements of the same field that would be referenced by the same memory operation
+are stored adjacent to each other.

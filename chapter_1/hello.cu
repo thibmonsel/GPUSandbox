@@ -17,7 +17,7 @@ __global__ void helloFromGPU(void)
 Comment 1 : Compiling and Executing
 
 nvcc hello.cu -o hello 
-compile the file hello.cu with nvcc.
+compile the file hello.cu with nvcc (NVIDIA C Compiler).
 run the executable file hello to get Hello World 
 */
 int main(void)
@@ -43,6 +43,7 @@ int main(void)
     the current device in the current process.
     */
     cudaDeviceSynchronize();
+    cudaDeviceReset();
 
     return 0;
 }
@@ -61,8 +62,7 @@ A typical CUDA program structure consists of five main steps:
 /*
 Comment 6 : 
 In the simple program hello.cu, you only see the third step: Invoke the kernel. For
-the remainder of this book, examples will demonstrate each step in the CUDA pro-
-gram structure.
+the remainder of this book, examples will demonstrate each step in the CUDA program structure.
 */
 
 
@@ -71,6 +71,7 @@ Comment 7 : Locality
 
 Locality is an important concept in parallel programming. 
 If refers to the reuse of data so as to reduce memory access latency.
+
 There are 2 types of locality : 
 - temporal locality refers to the reuse of data and/or resources within small time durations.
 - spatial locality refers to the reuse of data elements within close storage locations.
@@ -80,7 +81,7 @@ programmers responsibility to utilize the CPU cache efficiently.
 
 CUDA exposes you to the concepts of both memory hierarchy and thread hierarchy. 
 
-For example, a special memory, called shared memory, is exposed by the CUDA.
+For example, a special memory, called shared memory, is exposed by the CUDA programming model.
 Shared memory can be thought of as a software-managed cache, which provides great speed-
 up by conserving bandwidth to main memory. With shared memory, you can control the locality of
 your code directly.
