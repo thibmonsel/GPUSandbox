@@ -30,16 +30,16 @@ Vector C (Result):   | C0 | C1 | C2 | C3 |  | C4 | C5 | C6 | C7 |  | C8 | C9 |C1
                      +==================+  +==================+  +==================+  +==================+
                            ^                   ^                   ^                   ^
                            |                   |                   |                   |
-# --- CUDA Grid Structure & Mapping ---      |                   |                   |
+# --- CUDA Grid Structure & Mapping ---        |                   |                   |
                            |                   |                   |                   |
                      +-----+-------------------+-------------------+-------------------+
                      |                         |                   |                   |
-Grid:         [ Block 0 ]--------- [ Block 1 ]--------- [ Block 2 ]--------- [ Block 3 ]
-blockIdx.x:      (bIdx=0)            (bIdx=1)            (bIdx=2)            (bIdx=3)
-                 / | \ \             / | \ \             / | \ \             / | \ \
-Threads:       T0 T1 T2 T3         T0 T1 T2 T3         T0 T1 T2 T3         T0 T1 T2 T3
-threadIdx.x:  (tIdx=0..3)         (tIdx=0..3)         (tIdx=0..3)         (tIdx=0..3)
-blockDim.x:      (4)                 (4)                 (4)                 (4)
+Grid:           [ Block 0 ]--------- [ Block 1 ]--------- [ Block 2 ]--------- [ Block 3 ]
+blockIdx.x:        (bIdx=0)            (bIdx=1)            (bIdx=2)            (bIdx=3)
+                   / | \ \             / | \ \             / | \ \             / | \ \
+Threads:         T0 T1 T2 T3         T0 T1 T2 T3         T0 T1 T2 T3         T0 T1 T2 T3
+threadIdx.x:    (tIdx=0..3)         (tIdx=0..3)         (tIdx=0..3)         (tIdx=0..3)
+blockDim.x:        (4)                 (4)                 (4)                 (4)
 
 # --- How Each Thread Calculates its Global Index (idx) ---
 # Formula: idx = blockIdx.x * blockDim.x + threadIdx.x
