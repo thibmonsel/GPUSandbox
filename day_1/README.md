@@ -3,12 +3,36 @@
 CUDA vector add operation. 
 
 ```bash
-Starting... 
-Vector size: 1048576 that will be of size 4194304 bytes (sizeof(float)=4) 
-Init time for vectors: 0.04557 sec
-Vector addition on the host: 0.00231 sec
-Vector addition on the device: 0.00035 sec
+./vectorAdd
+Starting Simple Vector Add (Single Stream) - Timing Total GPU Work...
+Configuration:
+Vector elements (N): 1048576 (1.00 Million)
+Vector size: 4194304 bytes (4.00 MB)
+Kernel launch: 4096 blocks, 256 threads per block
+Allocating host memory (16777216 bytes)...
+Initializing host data...
+Host data initialization time: 0.03303 sec
+Performing vector addition on host...
+Host vector addition time: 0.00279 sec
+Allocating Device Memory (12582912 bytes)...
+
+Creating CUDA events for overall GPU timing...
+Starting GPU operations and recording events...
+  Copying data from host to device (A)...
+  Copying data from host to device (B)...
+  Launching kernel...
+  Copying result from device to host...
+Waiting for all GPU operations to complete (synchronizing on event)...
+
+--- Total GPU Performance ---
+Total GPU execution time (H2D + Kernel + D2H): 2.266 ms
+Effective Memory Bandwidth (Combined H2D + Kernel + D2H): 5.172 GiB/s
+Overall Performance including transfers: 0.463 GFLOPS
+
+--- Verification ---
 Arrays match.
+
+Cleaning up resources...
 Done
 ```
 
@@ -79,35 +103,30 @@ blockDim.x:        (4)                 (4)                 (4)                 (
 Profiling of the code with `nvprof`.
 
 ```bash
-nvprof ./vectorAdd
-Starting... 
-Vector size: 1048576 that will be of size 4194304 bytes (sizeof(float)=4) 
-Init time for vectors: 0.02718 sec
-Vector addition on the host: 0.00217 sec
-==283523== NVPROF is profiling process 283523, command: ./vectorAdd
-Vector addition on the device: 0.00034 sec
-Arrays match.
-Done
-==283523== Profiling application: ./vectorAdd
-==283523== Profiling result:
+==477106== Profiling application: ./vectorAdd
+==477106== Profiling result:
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
- GPU activities:   56.31%  1.3775ms         2  688.76us  639.36us  738.17us  [CUDA memcpy HtoD]
-                   35.00%  856.28us         1  856.28us  856.28us  856.28us  [CUDA memcpy DtoH]
-                    8.69%  212.48us         1  212.48us  212.48us  212.48us  vectorAddOnDevice(float*, float*, float*, int)
-      API calls:   59.21%  147.90ms         3  49.302ms  35.819us  147.82ms  cudaMalloc
-                   37.77%  94.343ms         1  94.343ms  94.343ms  94.343ms  cudaDeviceReset
-                    1.75%  4.3713ms       114  38.345us     124ns  2.4519ms  cuDeviceGetAttribute
-                    1.06%  2.6406ms         3  880.21us  769.17us  996.28us  cudaMemcpy
-                    0.09%  213.63us         1  213.63us  213.63us  213.63us  cudaDeviceSynchronize
-                    0.06%  162.24us         3  54.081us  32.844us  75.560us  cudaFree
-                    0.05%  118.45us         1  118.45us  118.45us  118.45us  cudaLaunchKernel
-                    0.02%  39.638us         1  39.638us  39.638us  39.638us  cuDeviceGetName
-                    0.00%  4.6680us         1  4.6680us  4.6680us  4.6680us  cuDeviceGetPCIBusId
-                    0.00%  3.1710us         3  1.0570us     234ns  2.2870us  cuDeviceGetCount
-                    0.00%  1.4800us         2     740ns     148ns  1.3320us  cuDeviceGet
-                    0.00%     799ns         1     799ns     799ns     799ns  cuDeviceTotalMem
-                    0.00%     328ns         1     328ns     328ns     328ns  cuModuleGetLoadingMode
-                    0.00%     239ns         1     239ns     239ns     239ns  cuDeviceGetUuid
+ GPU activities:   64.34%  1.2360ms         2  617.98us  601.47us  634.50us  [CUDA memcpy HtoD]
+                   30.77%  591.10us         1  591.10us  591.10us  591.10us  [CUDA memcpy DtoH]
+                    4.89%  93.984us         1  93.984us  93.984us  93.984us  vectorAddOnDevice(float*, float*, float*, int)
+      API calls:   95.26%  135.98ms         3  45.326ms  36.698us  135.90ms  cudaMalloc
+                    2.95%  4.2039ms       114  36.876us     168ns  2.3437ms  cuDeviceGetAttribute
+                    1.57%  2.2360ms         3  745.33us  700.77us  805.26us  cudaMemcpy
+                    0.10%  135.97us         3  45.322us  32.421us  68.650us  cudaFree
+                    0.08%  110.95us         1  110.95us  110.95us  110.95us  cudaLaunchKernel
+                    0.03%  36.595us         1  36.595us  36.595us  36.595us  cuDeviceGetName
+                    0.01%  15.733us         2  7.8660us  5.4860us  10.247us  cudaEventRecord
+                    0.01%  9.5410us         2  4.7700us  1.2050us  8.3360us  cudaEventCreate
+                    0.00%  4.7160us         1  4.7160us  4.7160us  4.7160us  cuDeviceGetPCIBusId
+                    0.00%  3.0990us         3  1.0330us     215ns  2.6100us  cuDeviceGetCount
+                    0.00%  1.8460us         1  1.8460us  1.8460us  1.8460us  cudaEventSynchronize
+                    0.00%  1.3570us         1  1.3570us  1.3570us  1.3570us  cudaEventElapsedTime
+                    0.00%     981ns         2     490ns     169ns     812ns  cuDeviceGet
+                    0.00%     899ns         2     449ns     246ns     653ns  cudaEventDestroy
+                    0.00%     874ns         1     874ns     874ns     874ns  cuDeviceTotalMem
+                    0.00%     394ns         1     394ns     394ns     394ns  cuModuleGetLoadingMode
+                    0.00%     288ns         1     288ns     288ns     288ns  cuDeviceGetUuid
+                    0.00%     177ns         1     177ns     177ns     177ns  cudaGetLastError
 ```
 
 Roughly 60% for allocating memory and 40% reset all state's device and only 10% of the execution is used for vector operation. 
@@ -120,4 +139,4 @@ data. If your application spends less time computing than transferring data, it 
 minimize the transfer between the host and device. In Chapter 6, you will learn how to overlap
 computation with communication using CUDA streams and events.*
 
-In our case here the data transfer can't be sped up because the size of our vector is small and it can fit in our GPU global memory.
+We will see in day 2 how CUDA streams can help us shed some time in data transfers.
