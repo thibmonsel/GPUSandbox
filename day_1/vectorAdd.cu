@@ -33,7 +33,7 @@ together.
         }                                                                                                                \
     } while (0)
 
-void initializeData(float *ip, int size)
+extern "C" void initializeData(float *ip, int size)
 {
     srand((unsigned)time(NULL));
     for (int i = 0; i < size; i++)
@@ -42,7 +42,7 @@ void initializeData(float *ip, int size)
     }
 }
 
-void vectorAddOnHost(float *A, float *B, float *C, const int N)
+extern "C" void vectorAddOnHost(float *A, float *B, float *C, const int N)
 {
     for (int i = 0; i < N; i++)
     {
@@ -50,7 +50,7 @@ void vectorAddOnHost(float *A, float *B, float *C, const int N)
     }
 }
 
-void checkResult(float *hostRef, float *gpuRef, const int N)
+extern "C" void checkResult(float *hostRef, float *gpuRef, const int N)
 {
     double epsilon = 1.0E-8;
     bool match = true;
@@ -85,7 +85,7 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
     }
 }
 
-__global__ void vectorAddOnDevice(float *A, float *B, float *C, const int N)
+extern "C" __global__ void vectorAddOnDevice(float *A, float *B, float *C, const int N)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < N)
