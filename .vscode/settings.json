@@ -4,6 +4,7 @@
         "*.cuh": "cpp",
         "stdlib.h": "c",
         "memory_resource": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "cstring": "cpp"
     }
 }
