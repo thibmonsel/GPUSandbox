@@ -7,7 +7,7 @@
 #include <vector>
 #include <cuda_runtime.h>
 #include <sys/time.h>
-#include "../day_common/day_common.h"
+#include "../common/common.h"
 
 #define CUDA_CHECK(call)                                                                                                 \
     do                                                                                                                   \
