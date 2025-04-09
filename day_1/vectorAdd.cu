@@ -1,22 +1,17 @@
 #include <stdio.h>
-#include <stdlib.h> // For malloc, free, srand, abs
-#include <time.h>   // For time()
-#include <string.h> // For memset
-#include <math.h>   // For fabs (preferred for float/double)
-
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include <math.h>
 #include <cuda_runtime.h>
-// Assuming day_common.h provides the seconds() function. If not, implement it.
-// #include "../day_common/day_common.h"
+#include <sys/time.h>
 
-// --- Simple replacement for seconds() if day_common.h isn't available ---
-#include <sys/time.h> // For gettimeofday() on Linux/macOS
 double seconds()
 {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1.e-6);
 }
-// --- End replacement ---
 
 /*
 An example of a vector addition on the host and device. Using a simple kernel to add two
@@ -25,7 +20,6 @@ number of threads. Each thread is responsible for adding one element of the two 
 together.
 */
 
-// Simple CUDA error checking macro
 #define CUDA_CHECK(call)                                                                                                 \
     do                                                                                                                   \
     {                                                                                                                    \
@@ -41,8 +35,7 @@ together.
 
 void initializeData(float *ip, int size)
 {
-    // generate different seed for random number
-    srand((unsigned)time(NULL)); // Use NULL for current time
+    srand((unsigned)time(NULL));
     for (int i = 0; i < size; i++)
     {
         ip[i] = (float)(rand() & 0xFF) / 10.0f;
@@ -60,13 +53,12 @@ void vectorAddOnHost(float *A, float *B, float *C, const int N)
 void checkResult(float *hostRef, float *gpuRef, const int N)
 {
     double epsilon = 1.0E-8;
-    bool match = true; // Use true/false
+    bool match = true;
     int mismatch_count = 0;
     const int max_mismatches_to_print = 10;
 
     for (int i = 0; i < N; i++)
     {
-        // Use fabs for floating point absolute value
         if (fabs(hostRef[i] - gpuRef[i]) > epsilon)
         {
             match = false;
@@ -135,7 +127,7 @@ int main(void)
     double iStartInit = seconds();
     initializeData(h_A, N);
     initializeData(h_B, N);
-    memset(h_C_prime, 0, nBytes); // Zero out GPU result buffer
+    memset(h_C_prime, 0, nBytes);
     double iEndInit = seconds();
     printf("Host data initialization time: %.5f sec\n", iEndInit - iStartInit);
 
@@ -205,7 +197,7 @@ int main(void)
 
         // GFLOPS calculation remains the same (N additions), but the time base is different
         double gflops = (double)N / secondsElapsed / 1e9;
-        printf("Overall Performance including transfers: %.3f GFLOPS\n", gflops); // Label clarifies this isn't just kernel
+        printf("Overall Performance including transfers: %.3f GFLOPS\n", gflops);
     }
 
     // Clean up events immediately after use
