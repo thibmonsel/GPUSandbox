@@ -14,7 +14,6 @@ Done
 
 Here is illustration of what happening under the hood :
 ```
-      
 # Vector Addition: C[i] = A[i] + B[i]
 # Vector Size N = 16
 # Threads Per Block (TPB / blockDim.x) = 4
