@@ -5,13 +5,7 @@
 #include <math.h>
 #include <cuda_runtime.h>
 #include <sys/time.h>
-
-double seconds()
-{
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    return ((double)tp.tv_sec + (double)tp.tv_usec * 1.e-6);
-}
+#include "../common/common.h"
 
 /*
 An example of a vector addition on the host and device. Using a simple kernel to add two
@@ -33,7 +27,7 @@ together.
         }                                                                                                                \
     } while (0)
 
-extern "C" void initializeData(float *ip, int size)
+void initializeData(float *ip, int size)
 {
     srand((unsigned)time(NULL));
     for (int i = 0; i < size; i++)
@@ -42,7 +36,7 @@ extern "C" void initializeData(float *ip, int size)
     }
 }
 
-extern "C" void vectorAddOnHost(float *A, float *B, float *C, const int N)
+void vectorAddOnHost(float *A, float *B, float *C, const int N)
 {
     for (int i = 0; i < N; i++)
     {
@@ -50,7 +44,7 @@ extern "C" void vectorAddOnHost(float *A, float *B, float *C, const int N)
     }
 }
 
-extern "C" void checkResult(float *hostRef, float *gpuRef, const int N)
+void checkResult(float *hostRef, float *gpuRef, const int N)
 {
     double epsilon = 1.0E-8;
     bool match = true;
@@ -85,7 +79,7 @@ extern "C" void checkResult(float *hostRef, float *gpuRef, const int N)
     }
 }
 
-extern "C" __global__ void vectorAddOnDevice(float *A, float *B, float *C, const int N)
+__global__ void vectorAddOnDevice(float *A, float *B, float *C, const int N)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < N)
