@@ -3,7 +3,7 @@ Shared Memory Allocation
 There are several ways to allocate or declare shared memory variables depending on your appli-
 cation requirements. You can allocate shared memory variables either statically or dynamically.
 Shared memory can also be declared as either local to a CUDA kernel or globally in a CUDA source
-code fi le. CUDA supports declaration of 1D, 2D, and 3D shared memory arrays.
+code file. CUDA supports declaration of 1D, 2D, and 3D shared memory arrays.
 A shared memory variable is declared with the following qualifier:
 
 __shared__
@@ -11,7 +11,7 @@ __shared__
 
 The following code segment statically declares a shared memory 2D float array. If declared inside
 a kernel function, the scope of this variable is local to the kernel. If declared outside of any kernels
-in a fi le, the scope of this variable is global to all kernels.
+in a file, the scope of this variable is global to all kernels.
 
 __shared__ float tile[size_y][size_x];
 

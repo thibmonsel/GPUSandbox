@@ -76,9 +76,8 @@ blockDim.x:        (4)                 (4)                 (4)                 (
 #   into the vectors A, B, and C that it is responsible for.
 ```
 
-
-
 Profiling of the code with `nvprof`.
+
 ```bash
 nvprof ./vectorAdd
 Starting... 
@@ -111,7 +110,7 @@ Done
                     0.00%     239ns         1     239ns     239ns     239ns  cuDeviceGetUuid
 ```
 
-Roughly 60% for allocating memory and 40% reset all state's device and only 10% of the execution is used for vector operation.
+Roughly 60% for allocating memory and 40% reset all state's device and only 10% of the execution is used for vector operation. 
 
 Quote from book p.48 : 
 
@@ -121,4 +120,4 @@ data. If your application spends less time computing than transferring data, it 
 minimize the transfer between the host and device. In Chapter 6, you will learn how to overlap
 computation with communication using CUDA streams and events.*
 
-In day 2 will try to minimize the transfer between host and device to improve the overall executing time.
+In our case here the data transfer can't be sped up because the size of our vector is small and it can fit in our GPU global memory.

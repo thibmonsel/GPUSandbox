@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     printf("> Compute Capability %d.%d hardware with %d multi-processors\n",
            deviceProp.major, deviceProp.minor, deviceProp.multiProcessorCount);
 
-    // set up max connectioin
+    // set up max connection
     char *iname = "CUDA_DEVICE_MAX_CONNECTIONS";
     setenv(iname, "8", 1);
     char *ivalue = getenv(iname);
