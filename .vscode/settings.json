@@ -5,6 +5,7 @@
         "stdlib.h": "c",
         "memory_resource": "cpp",
         "chrono": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "cstdlib": "cpp"
     }
 }

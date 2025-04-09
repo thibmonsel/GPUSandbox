@@ -6,3 +6,7 @@
 *.fatbin
 
 chapter_1/hello
+
+*
+*.rep
+.vscode/*
