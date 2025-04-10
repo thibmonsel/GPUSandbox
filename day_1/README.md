@@ -3,7 +3,7 @@
 CUDA vector add operation. 
 
 ```bash
-./vectorAdd
+nvprof ./vectorAdd
 Starting Simple Vector Add (Single Stream) - Timing Total GPU Work...
 Configuration:
 Vector elements (N): 1048576 (1.00 Million)
@@ -11,10 +11,11 @@ Vector size: 4194304 bytes (4.00 MB)
 Kernel launch: 4096 blocks, 256 threads per block
 Allocating host memory (16777216 bytes)...
 Initializing host data...
-Host data initialization time: 0.03303 sec
+Host data initialization time: 0.03250 sec
 Performing vector addition on host...
-Host vector addition time: 0.00279 sec
+Host vector addition time: 0.00299 sec
 Allocating Device Memory (12582912 bytes)...
+==754875== NVPROF is profiling process 754875, command: ./vectorAdd
 
 Creating CUDA events for overall GPU timing...
 Starting GPU operations and recording events...
@@ -25,15 +26,39 @@ Starting GPU operations and recording events...
 Waiting for all GPU operations to complete (synchronizing on event)...
 
 --- Total GPU Performance ---
-Total GPU execution time (H2D + Kernel + D2H): 2.266 ms
-Effective Memory Bandwidth (Combined H2D + Kernel + D2H): 5.172 GiB/s
-Overall Performance including transfers: 0.463 GFLOPS
+Total GPU execution time (H2D + Kernel + D2H): 2.536 ms
+Effective Memory Bandwidth (Combined H2D + Kernel + D2H): 4.621 GiB/s
+Overall Performance including transfers: 0.413 GFLOPS
 
 --- Verification ---
 Arrays match.
 
 Cleaning up resources...
 Done
+==754875== Profiling application: ./vectorAdd
+==754875== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   59.59%  1.2086ms         2  604.29us  576.71us  631.87us  [CUDA memcpy HtoD]
+                   29.25%  593.15us         1  593.15us  593.15us  593.15us  [CUDA memcpy DtoH]
+                   11.16%  226.27us         1  226.27us  226.27us  226.27us  vectorAddOnDevice(float*, float*, float*, int)
+      API calls:   94.84%  139.81ms         3  46.602ms  37.851us  139.71ms  cudaMalloc
+                    2.69%  3.9687ms       114  34.813us     164ns  2.1162ms  cuDeviceGetAttribute
+                    1.62%  2.3902ms         3  796.73us  700.15us  973.88us  cudaMemcpy
+                    0.70%  1.0264ms         3  342.14us  38.664us  948.95us  cudaFree
+                    0.08%  122.62us         1  122.62us  122.62us  122.62us  cudaLaunchKernel
+                    0.03%  47.373us         1  47.373us  47.373us  47.373us  cuDeviceGetName
+                    0.02%  30.455us         2  15.227us  5.2110us  25.244us  cudaEventRecord
+                    0.01%  9.6800us         2  4.8400us  1.3550us  8.3250us  cudaEventCreate
+                    0.00%  5.2380us         1  5.2380us  5.2380us  5.2380us  cuDeviceGetPCIBusId
+                    0.00%  3.3560us         3  1.1180us     228ns  2.7010us  cuDeviceGetCount
+                    0.00%  1.7890us         1  1.7890us  1.7890us  1.7890us  cudaEventSynchronize
+                    0.00%  1.6010us         1  1.6010us  1.6010us  1.6010us  cudaEventElapsedTime
+                    0.00%  1.1090us         2     554ns     335ns     774ns  cudaEventDestroy
+                    0.00%     929ns         2     464ns     188ns     741ns  cuDeviceGet
+                    0.00%     696ns         1     696ns     696ns     696ns  cuDeviceTotalMem
+                    0.00%     472ns         1     472ns     472ns     472ns  cuModuleGetLoadingMode
+                    0.00%     328ns         1     328ns     328ns     328ns  cuDeviceGetUuid
+                    0.00%     324ns         1     324ns     324ns     324ns  cudaGetLastError
 ```
 
 Here is illustration of what happening under the hood :
@@ -100,36 +125,7 @@ blockDim.x:        (4)                 (4)                 (4)                 (
 #   into the vectors A, B, and C that it is responsible for.
 ```
 
-Profiling of the code with `nvprof`.
-
-```bash
-==477106== Profiling application: ./vectorAdd
-==477106== Profiling result:
-            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
- GPU activities:   64.34%  1.2360ms         2  617.98us  601.47us  634.50us  [CUDA memcpy HtoD]
-                   30.77%  591.10us         1  591.10us  591.10us  591.10us  [CUDA memcpy DtoH]
-                    4.89%  93.984us         1  93.984us  93.984us  93.984us  vectorAddOnDevice(float*, float*, float*, int)
-      API calls:   95.26%  135.98ms         3  45.326ms  36.698us  135.90ms  cudaMalloc
-                    2.95%  4.2039ms       114  36.876us     168ns  2.3437ms  cuDeviceGetAttribute
-                    1.57%  2.2360ms         3  745.33us  700.77us  805.26us  cudaMemcpy
-                    0.10%  135.97us         3  45.322us  32.421us  68.650us  cudaFree
-                    0.08%  110.95us         1  110.95us  110.95us  110.95us  cudaLaunchKernel
-                    0.03%  36.595us         1  36.595us  36.595us  36.595us  cuDeviceGetName
-                    0.01%  15.733us         2  7.8660us  5.4860us  10.247us  cudaEventRecord
-                    0.01%  9.5410us         2  4.7700us  1.2050us  8.3360us  cudaEventCreate
-                    0.00%  4.7160us         1  4.7160us  4.7160us  4.7160us  cuDeviceGetPCIBusId
-                    0.00%  3.0990us         3  1.0330us     215ns  2.6100us  cuDeviceGetCount
-                    0.00%  1.8460us         1  1.8460us  1.8460us  1.8460us  cudaEventSynchronize
-                    0.00%  1.3570us         1  1.3570us  1.3570us  1.3570us  cudaEventElapsedTime
-                    0.00%     981ns         2     490ns     169ns     812ns  cuDeviceGet
-                    0.00%     899ns         2     449ns     246ns     653ns  cudaEventDestroy
-                    0.00%     874ns         1     874ns     874ns     874ns  cuDeviceTotalMem
-                    0.00%     394ns         1     394ns     394ns     394ns  cuModuleGetLoadingMode
-                    0.00%     288ns         1     288ns     288ns     288ns  cuDeviceGetUuid
-                    0.00%     177ns         1     177ns     177ns     177ns  cudaGetLastError
-```
-
-Roughly 60% for allocating memory and 40% reset all state's device and only 10% of the execution is used for vector operation. 
+Roughly 65% for allocating memory and 30% reset all state's device and only 5% of the execution is used for vector operation. 
 
 Quote from book p.48 : 
 

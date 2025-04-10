@@ -72,10 +72,6 @@ void checkResult(float *hostRef, float *gpuRef, const int N)
     else
     {
         printf("ARRAYS DO NOT MATCH! Total mismatches: %d\n", mismatch_count);
-        if (mismatch_count > max_mismatches_to_print)
-        {
-            printf(" (Only the first %d mismatches were printed)\n", max_mismatches_to_print);
-        }
     }
 }
 
