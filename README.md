@@ -39,7 +39,7 @@ vectors together. Day 2 is basically the same as day 1 but with CUDA streams to 
 **TakeAways** : Thanks to CUDA streams that leverages asynchronous data transfer the global execution was greatly reduced.
 
 
-## Day 2
+## Day 3
 
 ### File `vectorAddOptimized.cu`
 
@@ -50,4 +50,4 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Learn about `float4` CUDA type
 - Saw a grid-stride loop over a `float4` elements (each thread now has more operations to do).
 
-**TakeAways** : CUDA type `float4` use one memory instruction for loading 4 floats. Grid-stride loops allow to reduce overhead, allows for instruction level parallelism (ILP) (Gives the compiler and hardware more independent instructions within a single thread's execution path, potentially allowing for better pipelining and parallel execution within the core.)
+**TakeAways** : CUDA type `float4` use one memory instruction for loading 4 floats. Grid-stride loops allow to reduce overhead, allows for instruction level parallelism (ILP), i.e. more independent instructions within a thread.
