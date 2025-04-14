@@ -68,12 +68,14 @@ void matrixAddOnHost(float *A, float *B, float *C, const int nx, const int ny)
 
 __global__ void matrixAddonDevice(float *A, float *B, float *C, const int nx, const int ny)
 {
-    unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if (tid < nx * ny)
+    unsigned int ix = threadIdx.x + blockIdx.x * blockDim.x;
+    if (ix < nx)
     {
-        int ix = tid % ny;
-        int iy = tid / nx;
-        C[iy * ny + ix] = A[iy * ny + ix] + B[iy * ny + ix];
+        for (int iy = 0; iy < ny; iy++)
+        {
+            int idx = iy * nx + ix;
+            C[idx] = A[idx] + B[idx];
+        }
     }
 }
 int main(void)
@@ -87,7 +89,7 @@ int main(void)
     size_t nBytes = (size_t)N * sizeof(float);
     printf("Matrix size: nx %d ny %d\n", nx, ny);
 
-    int numThreadsPerBlock = 256;
+    int numThreadsPerBlock = 1024;
     int numBlocks = (N + numThreadsPerBlock - 1) / numThreadsPerBlock;
 
     // --- Host Memory Allocation ---
