@@ -8,10 +8,10 @@
 #include "../common/common.h"
 
 /*
-An example of a vector addition on the host and device. Using a simple kernel to add two
-vectors together. The kernel is launched with a grid of blocks, where each block contains a
-number of threads. Each thread is responsible for adding one element of the two vectors
-together.
+An example of a matrix addition on the host and device. Using a simple kernel to add two
+matrices together. Typically, a matrix is stored linearly in global memory with a row-major
+approach. With this representation, we can use with ease the 1D grid and 1D block although
+higher 2D grid/blocks can be used.
 */
 
 #define CUDA_CHECK(call)                                                                                                 \
@@ -29,75 +29,66 @@ together.
 
 void initializeData(float *ip, int size)
 {
+    // generate different seed for random number
     srand((unsigned)time(NULL));
     for (int i = 0; i < size; i++)
     {
         ip[i] = (float)(rand() & 0xFF) / 10.0f;
     }
 }
-
-void vectorAddOnHost(float *A, float *B, float *C, const int N)
-{
-    for (int i = 0; i < N; i++)
-    {
-        C[i] = A[i] + B[i];
-    }
-}
-
 void checkResult(float *hostRef, float *gpuRef, const int N)
 {
     double epsilon = 1.0E-8;
-    bool match = true;
-    int mismatch_count = 0;
-    const int max_mismatches_to_print = 10;
-
+    bool match = 1;
     for (int i = 0; i < N; i++)
     {
-        if (fabs(hostRef[i] - gpuRef[i]) > epsilon)
+        if (abs(hostRef[i] - gpuRef[i]) > epsilon)
         {
-            match = false;
-            mismatch_count++;
-            if (mismatch_count <= max_mismatches_to_print)
-            {
-                printf("Mismatch at index %d: host=%.5f gpu=%.5f diff=%.5e\n",
-                       i, hostRef[i], gpuRef[i], fabs(hostRef[i] - gpuRef[i]));
-            }
+            match = 0;
+            printf("Arrays do not match!\n");
+            printf("host %5.2f gpu %5.2f at current %d\n", hostRef[i], gpuRef[i], i);
+            break;
         }
     }
-
     if (match)
-    {
-        printf("Arrays match.\n");
-    }
-    else
-    {
-        printf("ARRAYS DO NOT MATCH! Total mismatches: %d\n", mismatch_count);
-    }
+        printf("Arrays match.\n\n");
 }
 
-__global__ void vectorAddOnDevice(float *A, float *B, float *C, const int N)
+void matrixAddOnHost(float *A, float *B, float *C, const int nRow, const int nCol)
 {
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < N)
+    // View matrix as row master view Row 0 - Row 1 - .... - Row 6 and Row i : shape j
+    for (int ix = 0; ix < nCol; ix++)
     {
-        C[i] = A[i] + B[i];
+        for (int iy = 0; iy < nRow; iy++)
+        {
+            C[iy * nRow + ix] = A[iy * nRow + ix] + B[iy * nRow + ix];
+        }
     }
 }
 
+__global__ void matrixAddonDevice(float *A, float *B, float *C, const int nRow, const int nCol)
+{
+    unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid < nRow * nCol)
+    {
+        int ix = tid % nCol;
+        int iy = tid / nRow;
+        C[iy * nCol + ix] = A[iy * nCol + ix] + B[iy * nCol + ix];
+    }
+}
 int main(void)
 {
-    printf("Starting Simple Vector Add (Single Stream) - Timing Total GPU Work...\n");
 
     // --- Configuration ---
-    const int N = 1 << 20;
+    const int nRow = 1 << 14;
+    const int nCol = 1 << 14;
+    const int N = nRow * nCol;
+
     size_t nBytes = (size_t)N * sizeof(float);
+    printf("Matrix size: nRow %d nCol %d\n", nRow, nCol);
+
     int numThreadsPerBlock = 256;
     int numBlocks = (N + numThreadsPerBlock - 1) / numThreadsPerBlock;
-
-    printf("Configuration:\n");
-    printf("Vector elements (N): %d (%.2f Million)\n", N, (float)N / (1 << 20));
-    printf("Vector size: %zu bytes (%.2f MB)\n", nBytes, (float)nBytes / (1 << 20));
-    printf("Kernel launch: %d blocks, %d threads per block\n", numBlocks, numThreadsPerBlock);
 
     // --- Host Memory Allocation ---
     float *h_A, *h_B, *h_C, *h_C_prime;
@@ -122,15 +113,15 @@ int main(void)
     printf("Host data initialization time: %.5f sec\n", iEndInit - iStartInit);
 
     // --- Host Calculation (for verification) ---
-    printf("Performing vector addition on host...\n");
+    printf("Performing matrix addition on host...\n");
     double iStartHost = seconds();
-    vectorAddOnHost(h_A, h_B, h_C, N);
+    matrixAddOnHost(h_A, h_B, h_C, nRow, nCol);
     double iEndHost = seconds();
     printf("Host vector addition time: %.5f sec\n", iEndHost - iStartHost);
 
     // --- Device Memory Allocation ---
     float *d_A, *d_B, *d_C;
-    printf("Allocating Device Memory (%zu bytes)...\n", 3 * nBytes);
+    printf("Allocating Device Memory (%zu bytes)...\n", nBytes);
     CUDA_CHECK(cudaMalloc((float **)&d_A, nBytes));
     CUDA_CHECK(cudaMalloc((float **)&d_B, nBytes));
     CUDA_CHECK(cudaMalloc((float **)&d_C, nBytes));
@@ -154,7 +145,7 @@ int main(void)
 
     // 2. GPU Kernel Execution
     printf("  Launching kernel...\n");
-    vectorAddOnDevice<<<numBlocks, numThreadsPerBlock>>>(d_A, d_B, d_C, N);
+    matrixAddonDevice<<<numBlocks, numThreadsPerBlock>>>(d_A, d_B, d_C, nRow, nCol);
     CUDA_CHECK(cudaGetLastError());
 
     // 3. D2H Data Transfer

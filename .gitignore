@@ -9,4 +9,4 @@ chapter_1/hello
 
 
 *.rep
-.vscode/
+.vscode/settings.json

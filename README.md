@@ -51,3 +51,14 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Saw a grid-stride loop over a `float4` elements (each thread now has more operations to do).
 
 **TakeAways** : CUDA type `float4` use one memory instruction for loading 4 floats. Grid-stride loops allow to reduce overhead, allows for instruction level parallelism (ILP), i.e. more independent instructions within a thread.
+
+## Day 4
+
+### File `matrixAdd.cu`
+
+**Summary** : An example of a matrix addition on the host and device. Typically, a matrix is stored linearly in global memory with a row-major approach. 
+
+**Concepts used** :
+- Matrix is stored in global memory in row-major approach.  
+
+**TakeAways** : With such a grid and block configuration vector and matrix addition are the same but you have to be careful with indices.
