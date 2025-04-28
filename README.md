@@ -56,9 +56,39 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 
 ### File `matrixAdd.cu`
 
-**Summary** : An example of a matrix addition on the host and device. Typically, a matrix is stored linearly in global memory with a row-major approach. 
+**Summary** : An example of a matrix addition on the host and device. Typically, a matrix is stored linearly in global memory with a row-major approach. Using the row-major approach to assimilate the matrix multiplication as a 1D vector addition. 
 
 **Concepts used** :
 - Matrix is stored in global memory in row-major approach.  
 
 **TakeAways** : With such a grid and block configuration vector and matrix addition are the same but you have to be careful with indices.
+
+## Day 5
+
+### File `matrixAdd2.cu`
+
+**Summary** : An example of a matrix addition on the host and device. Using a 1D block and 1D grid configuration, where each block is responsible for a chunk of matrix columns.
+
+**TakeAways** : Used another configuration grid, block configuration for the same operation as in day 04. 
+
+
+## Day 6
+
+### File `matrixAdd3.cu`
+
+**Summary** : An example of a matrix addition on the host and device. Using a 2D block and 2D grid configuration, where each block is responsible for a matrix chunk.
+
+**TakeAways** : Used another configuration grid, block configuration for the same operation as in day 05.
+
+## Day 7
+
+### File `simpleDivergence.cu`
+
+**Summary** : An example of warp divergence for CUDA and how to deal with it.
+
+**Concepts used** :
+- Issues with control-flow instructions in CUDA.
+- Intra-Warp divergence degrades performance.
+- Inter-War divergence (called Inter-Warp Variation) doesn't degrade performance because different warps make different branch decisions based on their data.
+
+**TakeAways** : Intra-Warp Divergence will make your code drop in performance. 
