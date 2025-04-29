@@ -239,3 +239,18 @@ ent warps do not cause warp divergence).
 - Intra-Warp Divergence (Bad): Threads within the same warp disagree on a branch condition. Hardware serializes the different paths, masking inactive threads. Reduces parallelism within the warp. Performance degrades.
 
 - Inter-Warp Differences (Fine): Different warps make different branch decisions based on their data. Each warp executes its chosen path efficiently (assuming no internal divergence within that warp). This is normal, expected parallel execution across independent warps. No serialization penalty between warps occurs due to these differing paths.
+
+Quote p.89 :
+
+*A thread block is called an active block when compute resources, such as registers and shared memory, have been allocated to it. The warps it contains are called active warps. Active warps can be further classified into the following three types:*
+
+*➤ Selected warp*
+*➤ Stalled warp*
+*➤ Eligible warp*
+
+*The warp schedulers on an SM select active warps on every cycle and dispatch them to execution units. A warp that is actively executing is called a selected warp. If an active warp is ready for execution but not currently executing, it is an eligible warp. If a warp is not ready for execution, it is a stalled warp. A warp is eligible for execution if both of the following two conditions is met:*
+
+*➤ Thirty-two CUDA cores are available for execution.*
+*➤ All arguments to the current instruction are ready.*
+
+*For example, the number of active warps on a Kepler SM at any time from launch to completion must be less than or equal to the architecture limit of 64 concurrent warps*

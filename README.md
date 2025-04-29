@@ -92,3 +92,18 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Inter-War divergence (called Inter-Warp Variation) doesn't degrade performance because different warps make different branch decisions based on their data.
 
 **TakeAways** : Intra-Warp Divergence will make your code drop in performance. 
+
+# Day 8
+
+### File `latencyHiding.cu`
+
+**Summary** : An example of the two types of arithmetic and memory latency hiding
+
+**Concepts used** :
+-- Discussed the "Occupancy" metric that shows how utilized is the hardware.
+- Inspected arithmetic and memory latency hiding.
+- Computed the number of warps needed to get latency hiding for a given block and grid configuration.
+
+**TakeAways** : To hide arithmetic and memory latency a balance between grid and block size needs to be done. 
+- Small thread blocks: Too few threads per block leads to hardware limits on the number of warps per SM to be reached before all resources are fully utilized.
+- Large thread blocks: Too many threads per block leads to fewer per-SM hardware resources available to each thread.
