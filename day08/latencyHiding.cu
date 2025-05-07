@@ -48,8 +48,8 @@ __global__ void arithmetic_latency_kernel(float *data, int num_iterations, size_
     if (idx < N)
     {
         float val = data[idx];
-        const float c1 = 1.000001f; // Slightly more than 1
-        const float c2 = 0.000001f; // Small constant
+        const float c1 = 1.000001f;
+        const float c2 = 0.000001f;
 
         // Chain of dependent operations - latency cannot be hidden within a thread
         for (int i = 0; i < num_iterations; ++i)
@@ -64,17 +64,17 @@ void test_arithmetic_latency(int max_warps_per_sm)
 {
     printf("\n--- Testing Arithmetic Latency Hiding ---\n");
 
-    const int block_size = 256; // Common block size
-    const int iterations = 500; // Number of dependent ops per thread
+    const int block_size = 256;
+    const int iterations = 500;
 
     // We expect performance (GFLOPS) to increase as N grows,
     // until we have enough warps to hide latency.
     std::vector<size_t> problem_sizes;
-    problem_sizes.push_back(1024 * 32);        // Small N
-    problem_sizes.push_back(1024 * 256);       // Medium N
-    problem_sizes.push_back(1024 * 1024);      // Large N
-    problem_sizes.push_back(1024 * 1024 * 8);  // Very Large N
-    problem_sizes.push_back(1024 * 1024 * 16); // Even Larger N
+    problem_sizes.push_back(1024 * 32);
+    problem_sizes.push_back(1024 * 256);
+    problem_sizes.push_back(1024 * 1024);
+    problem_sizes.push_back(1024 * 1024 * 8);
+    problem_sizes.push_back(1024 * 1024 * 16);
 
     cudaEvent_t start, stop;
     CUDA_CHECK(cudaEventCreate(&start));
@@ -151,12 +151,12 @@ void test_memory_latency(int max_warps_per_sm)
     // We expect performance (Bandwidth GB/s) to increase as N grows,
     // requiring many more warps than the arithmetic case.
     std::vector<size_t> problem_sizes;
-    // Start larger, as memory bandwidth needs more data
-    problem_sizes.push_back(1024 * 1024 * 4);   // Medium N
-    problem_sizes.push_back(1024 * 1024 * 16);  // Large N
-    problem_sizes.push_back(1024 * 1024 * 64);  // Very Large N
-    problem_sizes.push_back(1024 * 1024 * 128); // Even Larger N
-    problem_sizes.push_back(1024 * 1024 * 256); // Massive N
+
+    problem_sizes.push_back(1024 * 1024 * 4);
+    problem_sizes.push_back(1024 * 1024 * 16);
+    problem_sizes.push_back(1024 * 1024 * 64);
+    problem_sizes.push_back(1024 * 1024 * 128);
+    problem_sizes.push_back(1024 * 1024 * 256);
 
     cudaEvent_t start, stop;
     CUDA_CHECK(cudaEventCreate(&start));
@@ -187,7 +187,7 @@ void test_memory_latency(int max_warps_per_sm)
         for (size_t i = 0; i < N; ++i)
             h_input[i] = (float)i;
         CUDA_CHECK(cudaMemcpy(d_input, h_input.data(), nBytes, cudaMemcpyHostToDevice));
-        CUDA_CHECK(cudaMemset(d_output, 0, nBytes)); // Clear output
+        CUDA_CHECK(cudaMemset(d_output, 0, nBytes));
 
         // Warmup run
         memory_latency_kernel<<<gridDim, blockDim>>>(d_input, d_output, N);
@@ -226,7 +226,7 @@ int main()
     int max_warps = getMaxWarpsPerSM();
 
     test_arithmetic_latency(max_warps);
-    // test_memory_latency(max_warps);
+    test_memory_latency(max_warps);
 
     CUDA_CHECK(cudaDeviceReset());
 

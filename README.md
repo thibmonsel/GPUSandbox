@@ -100,10 +100,22 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 **Summary** : An example of the two types of arithmetic and memory latency hiding
 
 **Concepts used** :
--- Discussed the "Occupancy" metric that shows how utilized is the hardware.
+- Discussed the "Occupancy" metric that shows how utilized is the hardware.
 - Inspected arithmetic and memory latency hiding.
 - Computed the number of warps needed to get latency hiding for a given block and grid configuration.
 
 **TakeAways** : To hide arithmetic and memory latency a balance between grid and block size needs to be done. 
 - Small thread blocks: Too few threads per block leads to hardware limits on the number of warps per SM to be reached before all resources are fully utilized.
 - Large thread blocks: Too many threads per block leads to fewer per-SM hardware resources available to each thread.
+
+# Day 9
+
+### File `synchronize.cu`
+
+**Summary** : An example of the thread and global synchronization
+
+**Concepts used** :
+- Used ` __syncthreads();` and `cudaDeviceSynchronize()`.
+- Very briefly saw the concept of "sticky-errors" in CUDA (this means that the CUDA context is corrupted). Great link [here](https://leimao.github.io/blog/Proper-CUDA-Error-Checking/) !
+
+**TakeAways** : CUDA kernel launches are asynchronous. `cudaDeviceSynchronize()` is crucial for host-device coordination and for reliably catching kernel runtime errors, while `__syncthreads()` manages synchronization within a thread block. Beware of sticky errors impacting subsequent operations.

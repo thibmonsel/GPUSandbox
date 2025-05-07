@@ -1,6 +1,6 @@
 # Day 08
 
-Latency Hiding in CUDA. In order to hide latency, one must have a certain number of required warps given by Little's Law (c.f. quote below).
+Exploring Latency Hiding in CUDA. In order to hide latency, one must have a certain number of required warps given by Little's Law (c.f. quote below).
 
 $$\text{Number of required Warps} =\text{Latency} \times \text{Throughput}$$
 
@@ -225,12 +225,12 @@ Quote p.90-93 :
 
 *When considering instruction latency, instructions can be classified into two basic types:*
 
-*➤ Arithmetic instructions*
+*➤ Arithmetic instructions* \
 *➤ Memory instruction*
 
 *Arithmetic instruction latency is the time between an arithmetic operation starting and its output being produced. Memory instruction latency is the time between a load or store operation being issued and the data arriving at its destination. The corresponding latencies for each case are approximately.*
 
-*➤ 10-20 cycles for arithmetic operations*
+*➤ 10-20 cycles for arithmetic operations* \
 *➤ 400-800 cycles for global memory accesses*
 
 
