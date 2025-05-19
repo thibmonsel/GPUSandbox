@@ -119,3 +119,15 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Very briefly saw the concept of "sticky-errors" in CUDA (this means that the CUDA context is corrupted). Great link [here](https://leimao.github.io/blog/Proper-CUDA-Error-Checking/) !
 
 **TakeAways** : CUDA kernel launches are asynchronous. `cudaDeviceSynchronize()` is crucial for host-device coordination and for reliably catching kernel runtime errors, while `__syncthreads()` manages synchronization within a thread block. Beware of sticky errors impacting subsequent operations.
+
+# Day 10
+
+### File `vectorReduce.cu`
+
+**Summary** : An example of the parallel reduction operator in CUDA.
+
+**Concepts used** :
+- Discussed and implemented the parallel reduced with a neighbored pair method.
+- Warp divergence is present in our problem 
+
+**TakeAways** : The parallel reduction operator is a fundamental technique in CUDA for efficiently combining elements of an array (e.g., summing, finding min/max) in parallel.
