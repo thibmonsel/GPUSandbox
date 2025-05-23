@@ -19,11 +19,11 @@ Result:             25   _   _   _   _   _   _   _
 ```
 
 
-Profiling `vectorReduce.cu` : 
+Profiling `parallelReduce.cu` : 
 
 ```bash
-nvprof ./vectorReduce
-==262099== NVPROF is profiling process 262099, command: ./vectorReduce
+nvprof ./parallelReduce
+==761285== NVPROF is profiling process 761285, command: ./parallelReduce
 Using CUDA Device: NVIDIA T600 Laptop GPU
 Compute Capability: 7.5
 Max Threads Per Block: 1024
@@ -39,7 +39,7 @@ Input data: 0.00 MiB, Output (block sums): 0.00 KiB
 CPU Sum (expected): -100
 GPU Sum (actual):   -100
 Verification: PASS
-Elapsed Time: 0.016 ms
+Elapsed Time: 0.022 ms
 Performance:  0.000 GigaElements/s
 Effective Bandwidth (kernel part): 0.000 GiB/s
 
@@ -49,9 +49,9 @@ Input data: 0.00 MiB, Output (block sums): 0.00 KiB
 CPU Sum (expected): -4672
 GPU Sum (actual):   -4672
 Verification: PASS
-Elapsed Time: 0.014 ms
-Performance:  0.009 GigaElements/s
-Effective Bandwidth (kernel part): 0.035 GiB/s
+Elapsed Time: 0.021 ms
+Performance:  0.006 GigaElements/s
+Effective Bandwidth (kernel part): 0.023 GiB/s
 
 Problem Size N = 256 elements
 Configuration: 1 blocks, 256 threads/block
@@ -59,9 +59,9 @@ Input data: 0.00 MiB, Output (block sums): 0.00 KiB
 CPU Sum (expected): -4160
 GPU Sum (actual):   -4160
 Verification: PASS
-Elapsed Time: 0.012 ms
-Performance:  0.021 GigaElements/s
-Effective Bandwidth (kernel part): 0.079 GiB/s
+Elapsed Time: 0.021 ms
+Performance:  0.012 GigaElements/s
+Effective Bandwidth (kernel part): 0.045 GiB/s
 
 Problem Size N = 257 elements
 Configuration: 2 blocks, 256 threads/block
@@ -69,9 +69,9 @@ Input data: 0.00 MiB, Output (block sums): 0.01 KiB
 CPU Sum (expected): -4204
 GPU Sum (actual):   -4204
 Verification: PASS
-Elapsed Time: 0.013 ms
-Performance:  0.020 GigaElements/s
-Effective Bandwidth (kernel part): 0.075 GiB/s
+Elapsed Time: 0.022 ms
+Performance:  0.012 GigaElements/s
+Effective Bandwidth (kernel part): 0.044 GiB/s
 
 Problem Size N = 1048576 elements
 Configuration: 4096 blocks, 256 threads/block
@@ -79,9 +79,9 @@ Input data: 4.00 MiB, Output (block sums): 16.00 KiB
 CPU Sum (expected): -526400
 GPU Sum (actual):   -526400
 Verification: PASS
-Elapsed Time: 0.359 ms
-Performance:  2.918 GigaElements/s
-Effective Bandwidth (kernel part): 10.914 GiB/s
+Elapsed Time: 1.331 ms
+Performance:  0.788 GigaElements/s
+Effective Bandwidth (kernel part): 2.946 GiB/s
 
 Problem Size N = 1048589 elements
 Configuration: 4097 blocks, 256 threads/block
@@ -89,9 +89,9 @@ Input data: 4.00 MiB, Output (block sums): 16.00 KiB
 CPU Sum (expected): -525334
 GPU Sum (actual):   -525334
 Verification: PASS
-Elapsed Time: 0.356 ms
-Performance:  2.944 GigaElements/s
-Effective Bandwidth (kernel part): 11.009 GiB/s
+Elapsed Time: 1.324 ms
+Performance:  0.792 GigaElements/s
+Effective Bandwidth (kernel part): 2.961 GiB/s
 
 Problem Size N = 4194304 elements
 Configuration: 16384 blocks, 256 threads/block
@@ -99,42 +99,42 @@ Input data: 16.00 MiB, Output (block sums): 64.00 KiB
 CPU Sum (expected): -2102144
 GPU Sum (actual):   -2102144
 Verification: PASS
-Elapsed Time: 1.391 ms
-Performance:  3.014 GigaElements/s
-Effective Bandwidth (kernel part): 11.273 GiB/s
+Elapsed Time: 5.252 ms
+Performance:  0.799 GigaElements/s
+Effective Bandwidth (kernel part): 2.987 GiB/s
 -----------------------------------------------------
 
 Done.
-==262099== Profiling application: ./vectorReduce
-==262099== Profiling result:
+==761285== Profiling application: ../day10/vectorReduce
+==761285== Profiling result:
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
- GPU activities:   67.08%  8.6348ms        14  616.77us     512ns  3.1952ms  [CUDA memcpy HtoD]
-                   32.67%  4.2060ms        14  300.43us  4.5440us  1.3851ms  reduceNeighbored(int*, int*, unsigned int)
-                    0.15%  19.487us         7  2.7830us  1.4080us  7.7440us  [CUDA memcpy DtoH]
-                    0.10%  12.640us         7  1.8050us     960ns  3.0720us  [CUDA memset]
-      API calls:   53.00%  148.20ms         2  74.101ms     513ns  148.20ms  cudaEventCreate
-                   35.85%  100.24ms         1  100.24ms  100.24ms  100.24ms  cudaDeviceReset
-                    3.28%  9.1786ms        21  437.07us  3.4120us  3.2790ms  cudaMemcpy
-                    2.75%  7.6815ms        14  548.68us  4.0730us  7.5088ms  cudaLaunchKernel
-                    1.39%  3.8725ms       114  33.968us      47ns  2.2158ms  cuDeviceGetAttribute
-                    1.16%  3.2561ms         1  3.2561ms  3.2561ms  3.2561ms  cudaGetDeviceProperties
-                    0.85%  2.3744ms         7  339.20us  3.4460us  1.4419ms  cudaEventSynchronize
-                    0.82%  2.2996ms         7  328.51us  4.8210us  1.4419ms  cudaDeviceSynchronize
-                    0.43%  1.2028ms        14  85.913us  3.4740us  345.71us  cudaFree
-                    0.38%  1.0600ms        14  75.717us  2.4110us  268.57us  cudaMalloc
-                    0.03%  96.012us         7  13.716us  4.8820us  36.801us  cudaMemset
-                    0.03%  83.096us        14  5.9350us  2.6030us  15.181us  cudaEventRecord
-                    0.01%  18.873us         1  18.873us  18.873us  18.873us  cuDeviceGetName
-                    0.01%  15.735us         7  2.2470us  1.1020us  7.4200us  cudaEventElapsedTime
-                    0.00%  4.4230us         1  4.4230us  4.4230us  4.4230us  cuDeviceGetPCIBusId
-                    0.00%  2.8940us         3     964ns      87ns  2.5630us  cuDeviceGetCount
-                    0.00%  2.6340us         2  1.3170us     323ns  2.3110us  cudaEventDestroy
-                    0.00%  2.5360us        14     181ns      83ns     386ns  cudaGetLastError
-                    0.00%  1.6350us         1  1.6350us  1.6350us  1.6350us  cudaGetDevice
-                    0.00%     801ns         2     400ns      48ns     753ns  cuDeviceGet
-                    0.00%     646ns         1     646ns     646ns     646ns  cuModuleGetLoadingMode
-                    0.00%     231ns         1     231ns     231ns     231ns  cuDeviceTotalMem
-                    0.00%      93ns         1      93ns      93ns      93ns  cuDeviceGetUuid
+ GPU activities:   64.94%  15.888ms        14  1.1348ms  15.199us  5.2410ms  reduceNeighbored(int*, int*, unsigned int)
+                   34.87%  8.5318ms        14  609.41us     512ns  4.4911ms  [CUDA memcpy HtoD]
+                    0.11%  26.560us         7  3.7940us     992ns  8.1280us  [CUDA memset]
+                    0.08%  19.200us         7  2.7420us  1.4400us  7.3920us  [CUDA memcpy DtoH]
+      API calls:   52.17%  147.70ms         2  73.848ms     509ns  147.70ms  cudaEventCreate
+                   34.90%  98.818ms         1  98.818ms  98.818ms  98.818ms  cudaDeviceReset
+                    3.12%  8.8250ms        21  420.24us  1.9750us  4.6330ms  cudaMemcpy
+                    2.91%  8.2424ms         7  1.1775ms  17.254us  5.3188ms  cudaEventSynchronize
+                    2.88%  8.1408ms         7  1.1630ms  17.295us  5.2841ms  cudaDeviceSynchronize
+                    1.39%  3.9495ms       114  34.644us      43ns  2.1537ms  cuDeviceGetAttribute
+                    1.17%  3.3061ms         1  3.3061ms  3.3061ms  3.3061ms  cudaGetDeviceProperties
+                    0.85%  2.4123ms        14  172.31us  2.4160us  2.2614ms  cudaLaunchKernel
+                    0.28%  787.59us        14  56.256us  1.7180us  211.39us  cudaFree
+                    0.26%  740.66us        14  52.904us  1.4030us  223.93us  cudaMalloc
+                    0.03%  93.972us         7  13.424us  2.7140us  46.329us  cudaMemset
+                    0.02%  48.426us        14  3.4590us  2.0780us  7.2500us  cudaEventRecord
+                    0.01%  41.154us         1  41.154us  41.154us  41.154us  cuDeviceGetName
+                    0.00%  7.3130us         7  1.0440us     564ns  1.5330us  cudaEventElapsedTime
+                    0.00%  6.0970us         1  6.0970us  6.0970us  6.0970us  cuDeviceGetPCIBusId
+                    0.00%  3.3200us         3  1.1060us     229ns  2.7170us  cuDeviceGetCount
+                    0.00%  3.0620us        14     218ns      39ns     959ns  cudaGetLastError
+                    0.00%  2.2210us         2  1.1100us     371ns  1.8500us  cudaEventDestroy
+                    0.00%  1.6080us         1  1.6080us  1.6080us  1.6080us  cudaGetDevice
+                    0.00%     738ns         1     738ns     738ns     738ns  cuDeviceTotalMem
+                    0.00%     684ns         2     342ns     176ns     508ns  cuDeviceGet
+                    0.00%     423ns         1     423ns     423ns     423ns  cuModuleGetLoadingMode
+                    0.00%      85ns         1      85ns      85ns      85ns  cuDeviceGetUuid
 ```
 
 This CUDA file is a baseline for next days, as one might see that we have some warp divergence issues with L.50 ` if ((tid % (2 * s)) == 0)`.
