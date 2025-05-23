@@ -122,7 +122,7 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 
 # Day 10
 
-### File `vectorReduce.cu`
+### File `parallelReduce.cu`
 
 **Summary** : An example of the parallel reduction operator in CUDA.
 
@@ -131,3 +131,14 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Warp divergence is present in our problem 
 
 **TakeAways** : The parallel reduction operator is a fundamental technique in CUDA for efficiently combining elements of an array (e.g., summing, finding min/max) in parallel.
+
+# Day 11
+
+### File `parallelReduce2.cu`
+
+**Summary** : Second example of the parallel reduction operator in CUDA.
+
+**Concepts used** :
+- Reduced warp divergence is present in our problem 
+
+**TakeAways** : We changed the parallel reduction implementation by leverage different thread indexing to reduce warp divergence.
