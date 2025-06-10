@@ -142,3 +142,16 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Reduced warp divergence is present in our problem 
 
 **TakeAways** : We changed the parallel reduction implementation by leverage different thread indexing to reduce warp divergence.
+
+
+# Day 12
+
+### File `parallelReduce3.cu`
+
+**Summary** : Third example of the parallel reduction operator in CUDA.
+
+**Concepts used** :
+- Implemented Interleaved based parallel reduction method 
+- Same amount of warp divergence as in `day11`.
+
+**TakeAways** : This method is more optimal due to the better memory management with coalescing memory banks. Compared to day12 we saw a 2x improvement.
