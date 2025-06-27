@@ -170,10 +170,9 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 
 ### File `parallelReduceUnroll2.cu`
 
-**Summary** : Third example of the parallel reduction operator in CUDA.
+**Summary** : Fifth example of the parallel reduction operator in CUDA.
 
 **Concepts used** :
-- Implemented Interleaved based parallel reduction method 
-- Dealt with warp divergence by using CUDA primitives. 
+- Dealt with warp divergence by using CUDA primitives in Interleaved based parallel reduction method.
 
 **TakeAways** : Used `__shfl_down_sync` that allows the data exchange to be performed between registers, and is more efficient than going through shared memory, which requires a load, a store and an extra register to hold the address. 
