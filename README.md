@@ -155,3 +155,25 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Same amount of warp divergence as in `day11`.
 
 **TakeAways** : This method is more optimal due to the better memory management with coalescing memory banks. Compared to day12 we saw a 2x improvement.
+
+# Day 13
+
+### File `parallelReduceUnroll.cu`
+
+**Summary** : Fourth example of the parallel reduction operator in CUDA.
+
+**Concepts used** :
+- Implemented Interleaved based parallel reduction method with unrolling
+
+**TakeAways** : Using unrolling methods allows for more optimization from the compiler side to enhance performance.
+# Day 12
+
+### File `parallelReduceUnroll2.cu`
+
+**Summary** : Third example of the parallel reduction operator in CUDA.
+
+**Concepts used** :
+- Implemented Interleaved based parallel reduction method 
+- Dealt with warp divergence by using CUDA primitives. 
+
+**TakeAways** : Used `__shfl_down_sync` that allows the data exchange to be performed between registers, and is more efficient than going through shared memory, which requires a load, a store and an extra register to hold the address. 

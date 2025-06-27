@@ -1,6 +1,6 @@
 # Day10
 
-Visual example of a [Parallel reduction](https://en.wikipedia.org/wiki/Reduction_operator) with a Neighbored pair method: Elements are paired with their immediate neighbor. In this implementation, a thread takes two adjacent elements to produce one partial sum at each step.  For an array with N elements, this implementation requires $N − 1$ sums and $\log_2(N)$ steps.
+Visual example of a [Parallel reduction](https://en.wikipedia.org/wiki/Reduction_operator) with a Neighbored pair method: Elements are paired with their immediate neighbor. In this implementation, a thread takes two adjacent elements to produce one partial sum at each step. For an array with N elements, this implementation requires $N − 1$ sums and $\log_2(N)$ steps.
 
 ```bash
 Global Memory:     3   1   7   0   4   1   6   3
