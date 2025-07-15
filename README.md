@@ -154,7 +154,7 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Implemented Interleaved based parallel reduction method 
 - Same amount of warp divergence as in `day11`.
 
-**TakeAways** : This method is more optimal due to the better memory management with coalescing memory banks. Compared to day12 we saw a 2x improvement.
+**TakeAways** : This method is more optimal due to the better memory management with coalescing memory banks. Compared to day11 we saw a 2x improvement.
 
 # Day 13
 
@@ -166,7 +166,8 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Implemented Interleaved based parallel reduction method with unrolling
 
 **TakeAways** : Using unrolling methods allows for more optimization from the compiler side to enhance performance.
-# Day 12
+
+# Day 14
 
 ### File `parallelReduceUnroll2.cu`
 
@@ -176,3 +177,14 @@ vectors together that leverage CUDA streams and the CUDA type `float4`. Day 3 is
 - Dealt with warp divergence by using CUDA primitives in Interleaved based parallel reduction method.
 
 **TakeAways** : Used `__shfl_down_sync` that allows the data exchange to be performed between registers, and is more efficient than going through shared memory, which requires a load, a store and an extra register to hold the address. 
+
+# Day 14
+
+### File `dynamicParallelism.cu`
+
+**Summary** : Introduction of dynamic parallelism in CUDA.
+
+**Concepts used** :
+- Launched a simple HelloWorld with dynamic parallelism.
+
+**TakeAways** : CUDA Dynamic Parallelism allows new GPU kernels to be created and synchronized directly on the GPU. The ability to dynamically add parallelism to a GPU application at arbitrary points in a kernel offers exciting new capabilities.
